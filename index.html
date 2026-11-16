@@ -113,7 +113,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       question: '광문사가 세워진 해', before: '190', after: '년',
       clue: '1906년 1월, 대구에 ‘광문사’가 세워졌어요. 광문사 사람들은 나라의 힘을 기르려면 교육이 필요하다고 보고, 학교 세우기에 힘썼어요.',
       key: '1906년',
-      extra: '광문사의 서상돈은 나라가 어려워진 까닭이 백성들이 배우지 못한 데 있다고 보았어요. 그래서 무엇보다 교육을 강조했어요.',
+      extra: '광문사는 책을 펴내던 출판사예요. 김광제가 사장, 서상돈이 부사장을 맡았어요.',
       video: { id: 'Z6Erzwj3F04', title: '[근현대 대구 이야기] 4. 국채 보상 운동의 과거, 현재가 우리에게 주는 의미', channel: '대구미래교육연구원', length: '4분 45초' }
     },
     2: {
@@ -125,15 +125,15 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       video: { id: 'vier53PNHRk', title: '국사이야기, 국채보상운동', channel: 'EBS 교양', length: '1분 52초' }
     },
     3: {
-      title: '서상돈의 계산', digit: '3', accept: ['3'],
+      title: '서상돈의 계산', digit: '3', accept: ['3', '석', '세', '삼', '셋'],
       question: '담배를 끊자고 한 기간', before: '', after: '달',
       clue: '서상돈은 이렇게 제안했어요. “2천만 국민이 석 달 동안 담배를 끊고, 한 사람이 한 달에 20전씩 모으면 1,300만 원 가까이 모을 수 있어요.”',
       key: '석 달',
-      extra: '나랏빚을 갚으려고 담배를 끊는 일을 ‘단연’이라고 해요.',
+      extra: '담배를 끊는 것을 ‘단연’이라고 해요. 이때 많은 사람이 나랏빚을 갚으려고 단연했어요.',
       video: { id: 'egeQ1xiwZ7Q', title: '1,300만원에 나라를 뺏겨? 못뺏겨~어딜뺏겨!!', channel: '대구TV (대구광역시 공식)', length: '6분 25초' }
     },
     4: {
-      title: '남일동 부인들', digit: '7', accept: ['7'],
+      title: '남일동 부인들', digit: '7', accept: ['7', '일곱', '칠'],
       question: '패물폐지부인회를 만든 부인', before: '', after: '명',
       clue: '대구 남일동에 사는 부인 일곱 명이 ‘패물폐지부인회’를 만들었어요. 은반지와 은비녀를 빼서 나랏빚 갚는 데 보태자는 뜻이었지요.',
       key: '일곱 명',
@@ -143,7 +143,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     5: {
       title: '대구시민의 날', digit: '1', accept: ['1', '21'],
       question: '대구시민의 날', before: '2월 2', after: '일',
-      clue: '1907년 2월 21일, 대구 북후정에 사람들이 모여 국채보상운동을 시작했어요. 오늘날 대구는 이날을 ‘대구시민의 날’로 기념해요.',
+      clue: '1907년 2월 21일, 대구 사람들이 북후정에 모여 군민대회를 열고 의연금을 모으기 시작했어요. 오늘날 대구는 이날을 ‘대구시민의 날’로 기념해요.',
       key: '2월 21일',
       extra: '대구시는 2월 21일부터 2월 28일까지를 대구시민주간으로 정해 국채보상운동과 2.28 민주운동을 함께 기려요.',
       video: null
@@ -248,7 +248,9 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       '<div class="card"><h2>내 번호를 눌러요</h2>' + rows + '</div>' +
       '<div class="row" style="justify-content:space-between"><a class="btn white small" href="#library">영상 자료실</a><a class="btn white small" href="#teacher">선생님</a></div>';
     app.querySelectorAll('button[data-no]').forEach(b => b.addEventListener('click', () => {
-      S.set('me', Number(b.dataset.no)); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0);
+      const no = Number(b.dataset.no);
+      if (no === me()) return go(S.get('vault') ? '#group' : '#mission');
+      S.set('me', no); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0);
       go('#mission');
     }));
   }
@@ -286,8 +288,13 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     if (!solved) {
       const input = document.getElementById('answer'), msg = document.getElementById('msg');
       const check = () => {
-        if (E.checkAnswer(mn, input.value)) { S.set('solved', true); render(); return; }
-        const w = (S.get('wrong') || 0) + 1; S.set('wrong', w);
+        if (E.checkAnswer(mn, input.value)) {
+          S.set('solved', true); render();
+          const d = document.getElementById('digit'); if (d) d.scrollIntoView({ block: 'center' });
+          return;
+        }
+        if (!/[0-9０-９]/.test(input.value)) { msg.className = 'msg bad'; msg.textContent = '숫자로 써 봐요. (예: 5)'; return; }
+        const w =(S.get('wrong') || 0) + 1; S.set('wrong', w);
         if (w >= 2) { render(); const m2 = document.getElementById('msg'); m2.className = 'msg bad'; m2.textContent = '노란색으로 표시한 부분을 다시 읽어 봐요!'; }
         else { msg.className = 'msg bad'; msg.textContent = '아쉬워요. 단서를 다시 읽어 봐요.'; }
       };
@@ -387,6 +394,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 (function () {
   const E = window.Escape, S = E.store;
   let unlocked = false;
+  window.addEventListener('hashchange', () => { if (location.hash !== '#teacher') unlocked = false; });
   const fmt = won => won === 0 ? '0원' : (won % 10000 === 0 ? (won / 10000).toLocaleString('ko-KR') + '만 원' : won.toLocaleString('ko-KR') + '원');
   const SEAT = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
 
@@ -438,7 +446,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     draw();
     document.getElementById('reset').addEventListener('click', () => {
       if (!window.confirm('이 기기의 학생 진행과 게이지를 모두 지울까요?')) return;
-      S.clear(); draw();
+      S.clear(); unlocked = false; location.hash = '#start';
     });
   };
 })();
@@ -453,7 +461,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   function certHtml(group, c) {
     const weeks = c.weeks || [false, false, false, false];
     return '<div class="cert" id="cert"><h3>국채보상 모둠 의연 증서</h3>' +
-      '<p><b>의연한 모둠</b> ' + group + '모둠 (' + members(group).map(n => n + '번').join(', ') + ')</p>' +
+      '<p><b>약속한 모둠</b> ' + group + '모둠 (' + members(group).map(n => n + '번').join(', ') + ')</p>' +
       '<p><b>우리 모둠이 줄일 것</b> ' + blank(c.cut) + '</p>' +
       '<p><b>우리 모둠이 모을 것</b> ' + blank(c.save) + '</p>' +
       '<p><b>약속 기간</b> ' + blank(c.from) + '부터 ' + blank(c.to) + '까지</p>' +
@@ -476,7 +484,8 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   }
 
   window.EscapeGroup = function (box, group) {
-    const cert = S.get('cert') || {}, news = S.get('news') || {};
+    const CK = 'cert' + group, NK = 'news' + group;
+    const cert = S.get(CK) || {}, news = S.get(NK) || {};
     const mem = members(group);
     box.innerHTML =
       '<div class="card" id="think"><h2><span class="step">1</span>생각 나누기</h2>' +
@@ -513,27 +522,27 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     $('slogan').value = news.slogan || '';
     box.querySelectorAll('input[data-promise]').forEach(inp => { inp.value = (news.promises || {})[inp.dataset.promise] || ''; });
 
-    function readCert() { const c = S.get('cert') || {}; ['cut', 'save', 'from', 'to'].forEach(k => { c[k] = $(k).value; }); return c; }
+    function readCert() { const c = S.get(CK) || {}; ['cut', 'save', 'from', 'to'].forEach(k => { c[k] = $(k).value; }); return c; }
     function readNews() {
-      const n = S.get('news') || {};
+      const n = S.get(NK) || {};
       n.place = $('news-place').value; n.facts = [1, 2, 3].map(i => $('fact' + i).value); n.slogan = $('slogan').value;
       n.promises = {}; box.querySelectorAll('input[data-promise]').forEach(inp => { n.promises[inp.dataset.promise] = inp.value; });
       return n;
     }
     function showCert() {
-      const c = S.get('cert') || {};
+      const c = S.get(CK) || {};
       $('cert-out').innerHTML = c.made ? certHtml(group, c) : '';
       $('cert-out').querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => {
-        const cc = S.get('cert') || {}; cc.weeks = cc.weeks || [false, false, false, false];
-        cc.weeks[b.dataset.week] = !cc.weeks[b.dataset.week]; S.set('cert', cc); showCert();
+        const cc = S.get(CK) || {}; cc.weeks = cc.weeks || [false, false, false, false];
+        cc.weeks[b.dataset.week] = !cc.weeks[b.dataset.week]; S.set(CK, cc); showCert();
       }));
     }
-    function showNews() { const n = S.get('news') || {}; $('news-out').innerHTML = n.made ? newsHtml(group, n) : ''; }
+    function showNews() { const n = S.get(NK) || {}; $('news-out').innerHTML = n.made ? newsHtml(group, n) : ''; }
 
-    $('cert-form').addEventListener('input', () => { const c = readCert(); S.set('cert', c); if (c.made) showCert(); });
-    $('news-form').addEventListener('input', () => { const n = readNews(); S.set('news', n); if (n.made) showNews(); });
-    $('cert-make').addEventListener('click', () => { const c = readCert(); c.made = true; S.set('cert', c); showCert(); });
-    $('news-make').addEventListener('click', () => { const n = readNews(); n.made = true; S.set('news', n); showNews(); });
+    $('cert-form').addEventListener('input', () => { const c = readCert(); S.set(CK, c); if (c.made) showCert(); });
+    $('news-form').addEventListener('input', () => { const n = readNews(); S.set(NK, n); if (n.made) showNews(); });
+    $('cert-make').addEventListener('click', () => { const c = readCert(); c.made = true; S.set(CK, c); showCert(); });
+    $('news-make').addEventListener('click', () => { const n = readNews(); n.made = true; S.set(NK, n); showNews(); });
     $('print').addEventListener('click', () => window.print());
     showCert(); showNews();
   };

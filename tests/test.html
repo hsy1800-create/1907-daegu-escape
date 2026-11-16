@@ -19,7 +19,7 @@ const q = s => D().querySelector(s);
 const qa = s => [...D().querySelectorAll(s)];
 function reloadApp() { return new Promise(r => { frame().onload = () => setTimeout(r, 150); W().location.reload(); }); }
 async function go(hash) { W().location.hash = hash; await wait(120); }
-async function fresh() { try { W().localStorage.clear(); } catch (e) {} W().location.hash = ''; await reloadApp(); }
+async function fresh() { try { W().Escape.store.clear(); } catch (e) {} W().location.hash = ''; await reloadApp(); }
 
 // ---------------- Task 1: data and rules ----------------
 test('STUDENTS has 20 numbers without 2, 15, 17', () => {
@@ -156,6 +156,62 @@ test('gauge fills 65만 원 per student, toggles, and celebrates at 20', async (
 test('reset clears this device', async () => {
   await pick(12); await teacher(); W().confirm = () => true; await click('#reset');
   eq(W().Escape.store.get('me'), null); eq(W().Escape.store.get('gauge'), null);
+});
+
+// ---------------- Final review fixes ----------------
+async function pickKeep(no) { await go('#start'); q('button[data-no="' + no + '"]').click(); await wait(200); }
+test('teacher screen locks again after leaving it', async () => {
+  await teacher(); ok(q('.code-row'), 'unlocked first');
+  await go('#start'); await go('#teacher');
+  ok(!q('.code-row'), 'codes hidden after leaving'); ok(q('#pin'), 'asks for the PIN');
+});
+test('reset sends the device back to the start screen, locked', async () => {
+  await teacher(); W().confirm = () => true; await click('#reset');
+  eq(W().location.hash, '#start'); await go('#teacher'); ok(!q('.code-row'), 'locked after reset');
+});
+test('another group on the same device starts with an empty certificate and newspaper', async () => {
+  await pick(1); setVal('#answer', '6'); await click('#check'); await click('#to-vault'); await fillCode('60371');
+  setVal('#cut', '1모둠 약속'); await click('#cert-make'); setVal('#slogan', '1모둠 문구'); await click('#news-make');
+  ok(q('#cert') && q('#news'), 'group 1 made both');
+  await pickKeep(13); setVal('#answer', '7'); await click('#check'); await click('#to-vault'); await fillCode('37160');
+  eq(W().location.hash, '#group');
+  ok(!q('#cert') && !q('#news'), 'nothing made yet for group 3'); eq(q('#cut').value, ''); eq(q('#slogan').value, '');
+  await pickKeep(1); setVal('#answer', '6'); await click('#check'); await click('#to-vault'); await fillCode('60371');
+  ok(q('#cert') && q('#cert').textContent.includes('1모둠 약속'), 'group 1 work is still there');
+});
+test('Korean number words are accepted for missions 3 and 4', () => {
+  const a = W().Escape.checkAnswer;
+  ok(a(3, '석'), '석'); ok(a(3, '석 달'), '석 달'); ok(a(3, '세'), '세'); ok(a(3, '삼'), '삼');
+  ok(a(4, '일곱'), '일곱'); ok(a(4, '일곱 명'), '일곱 명'); ok(a(4, '칠'), '칠');
+  ok(!a(3, '넷'), '넷 is wrong'); ok(!a(4, '여덟'), '여덟 is wrong');
+});
+test('an answer without a digit asks for a number and does not count as a miss', async () => {
+  await pick(12); setVal('#answer', '모름'); await click('#check');
+  ok(q('#msg').textContent.includes('숫자로'), q('#msg').textContent); eq(W().Escape.store.get('wrong'), 0);
+  setVal('#answer', ''); await click('#check'); eq(W().Escape.store.get('wrong'), 0, 'empty box');
+});
+test('picking your own number again keeps your progress', async () => {
+  await pick(12); setVal('#answer', '3'); await click('#check');
+  await pickKeep(12); eq(W().location.hash, '#mission'); ok(q('#digit'), 'digit kept');
+  await click('#to-vault'); await fillCode('37160');
+  await pickKeep(12); eq(W().location.hash, '#group');
+});
+test('the secret digit is on screen right after a correct answer, even on a short screen', async () => {
+  const f = frame(), h = f.style.height; f.style.height = '420px';
+  try {
+    await pick(1); setVal('#answer', '6'); await click('#check');
+    const r = q('#digit').getBoundingClientRect(), vh = W().innerHeight;
+    ok(r.top >= 0 && r.bottom <= vh, 'digit at ' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' of ' + vh);
+  } finally { f.style.height = h; await wait(50); }
+});
+test('history wording: one start date, plain 단연, documented 광문사 roles, clear certificate label', async () => {
+  const M = W().Escape.MISSIONS;
+  ok(!M[5].clue.includes('운동을 시작'), 'mission 5 must not give a second start date: ' + M[5].clue);
+  ok(M[5].clue.includes('북후정') && M[5].clue.includes('2월 21일'), 'mission 5 keeps its answer');
+  ok(M[3].extra.indexOf('담배를 끊는 것을 ‘단연’이라고 해요') === 0, M[3].extra);
+  ok(M[1].extra.includes('사장') && M[1].extra.includes('부사장'), M[1].extra);
+  await openVault12(); setVal('#cut', 'x'); await click('#cert-make');
+  ok(!q('#cert').textContent.includes('의연한 모둠'), 'certificate label');
 });
 
 // ---------------- runner ----------------
