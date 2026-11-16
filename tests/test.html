@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>escape tests</title>
+<style>body{font:14px/1.5 monospace;margin:12px}iframe{width:420px;height:760px;border:1px solid #999;float:right}.f{color:#c00}.p{color:#080}</style></head>
+<body>
+<iframe id="app" src="../index.html"></iframe>
+<h3 id="sum">running…</h3>
+<pre id="out"></pre>
+<script>
+const out = document.getElementById('out');
+const T = [];
+const test = (name, fn) => T.push({ name, fn });
+const eq = (a, b, msg) => { const A = JSON.stringify(a), B = JSON.stringify(b); if (A !== B) throw new Error((msg || '') + ' expected ' + B + ' got ' + A); };
+const ok = (c, msg) => { if (!c) throw new Error(msg || 'not ok'); };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const frame = () => document.getElementById('app');
+const W = () => frame().contentWindow;
+const D = () => frame().contentDocument;
+const q = s => D().querySelector(s);
+const qa = s => [...D().querySelectorAll(s)];
+function reloadApp() { return new Promise(r => { frame().onload = () => setTimeout(r, 150); W().location.reload(); }); }
+async function go(hash) { W().location.hash = hash; await wait(120); }
+async function fresh() { try { W().localStorage.clear(); } catch (e) {} W().location.hash = ''; await reloadApp(); }
+
+// ---------------- Task 1: data and rules ----------------
+test('STUDENTS has 20 numbers without 2, 15, 17', () => {
+  const S = W().Escape.STUDENTS; eq(S.length, 20); ok(!S.includes(2) && !S.includes(15) && !S.includes(17));
+});
+test('groupOf maps numbers to group and seat', () => {
+  const g = W().Escape.groupOf;
+  eq(g(1), { group: 1, seat: 1 }); eq(g(6), { group: 1, seat: 5 }); eq(g(7), { group: 2, seat: 1 });
+  eq(g(18), { group: 3, seat: 5 }); eq(g(23), { group: 4, seat: 5 }); eq(g(2), null); eq(g(15), null);
+});
+test('missionFor rotates missions by group', () => {
+  const m = W().Escape.missionFor; eq(m(12), 3); eq(m(1), 1); eq(m(23), 3); eq(m(2), null);
+});
+test('groupCode per group', () => {
+  const c = W().Escape.groupCode; eq([1, 2, 3, 4].map(c), ['60371', '03716', '37160', '71603']);
+});
+test('each student digit sits in the right place of the group code', () => {
+  const E = W().Escape;
+  for (const no of E.STUDENTS) { const { group, seat } = E.groupOf(no); eq(E.MISSIONS[E.missionFor(no)].digit, E.groupCode(group)[seat - 1], 'no ' + no); }
+});
+test('checkAnswer accepts digits, full-width, spaces, full years', () => {
+  const a = W().Escape.checkAnswer;
+  ok(a(1, ' ６ ')); ok(a(1, '1906')); ok(a(2, '0')); ok(a(2, '1907')); ok(a(5, '21')); ok(a(5, '1')); ok(!a(3, '4')); ok(!a(4, ''));
+});
+test('checkGroupCode', () => {
+  const c = W().Escape.checkGroupCode; ok(c(3, '37160')); ok(c(3, ' 3 7 1 6 0 ')); ok(!c(3, '60371'));
+});
+test('gaugeWon', () => { const g = W().Escape.gaugeWon; eq(g(20), 13000000); eq(g(1), 650000); eq(g(0), 0); });
+test('store survives a throwing storage backend', () => {
+  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() { throw new Error('blocked'); } };
+  const s = W().Escape.makeStore(bad); s.set('k', { a: 1 }); eq(s.get('k'), { a: 1 }); s.clear(); eq(s.get('k'), null);
+});
+test('every mission has clue and question; missions 1-4 have a video, mission 5 none', () => {
+  const M = W().Escape.MISSIONS;
+  for (let i = 1; i <= 5; i++) { ok(M[i].title && M[i].clue && M[i].extra && M[i].question, 'mission ' + i); }
+  for (let i = 1; i <= 4; i++) { ok(M[i].video && M[i].video.id, 'video ' + i); }
+  eq(M[5].video, null);
+});
+
+// ---------------- Task 2: student flow ----------------
+function setVal(sel, v) { const el = q(sel); el.value = v; const Ev = W().Event; el.dispatchEvent(new Ev('input', { bubbles: true })); }
+async function click(sel) { q(sel).click(); await wait(150); }
+async function pick(no) { await fresh(); await go('#start'); q('button[data-no="' + no + '"]').click(); await wait(200); }
+async function fillCode(code) { qa('.code-box').forEach((b, i) => { b.value = code[i] || ''; }); await click('#open'); }
+
+test('start shows 20 number buttons without 2, 15, 17', async () => {
+  await fresh(); await go('#start');
+  eq(qa('button[data-no]').length, 20); ok(!q('button[data-no="2"]') && !q('button[data-no="15"]') && !q('button[data-no="17"]'));
+});
+test('picking 12 opens mission 3 as the first detective of group 3', async () => {
+  await pick(12);
+  eq(W().location.hash, '#mission'); const t = D().body.innerText;
+  ok(t.includes('3모둠') && t.includes('첫째 탐정'), 'intro'); eq(q('#m-title').textContent.trim(), '서상돈의 계산');
+});
+test('two wrong answers highlight the key words in the clue', async () => {
+  await pick(12);
+  setVal('#answer', '4'); await click('#check'); ok(!q('#clue mark'), 'no mark after 1 wrong');
+  setVal('#answer', '5'); await click('#check'); eq(q('#clue mark').textContent, '석 달');
+});
+test('right answer shows the secret digit and its place, kept after reload', async () => {
+  await pick(12);
+  setVal('#answer', '3'); await click('#check');
+  eq(q('#digit').textContent.trim(), '3'); ok(q('#slot').textContent.includes('첫째 자리'));
+  await reloadApp(); eq(W().location.hash, '#mission'); eq(q('#digit').textContent.trim(), '3');
+});
+test('vault opens with the group code and hints after three misses', async () => {
+  await pick(12); setVal('#answer', '3'); await click('#check'); await click('#to-vault');
+  eq(W().location.hash, '#vault'); eq(qa('.code-box').length, 5);
+  await fillCode('60371'); await fillCode('11111'); ok(!q('#vault-msg').textContent.includes('자리'), 'no seat hint yet');
+  await fillCode('22222'); ok(q('#vault-msg').textContent.includes('자리 순서'), 'seat hint');
+  await fillCode('37160'); eq(W().location.hash, '#group');
+});
+
+// ---------------- Task 3: group activities ----------------
+async function openVault12() { await pick(12); setVal('#answer', '3'); await click('#check'); await click('#to-vault'); await fillCode('37160'); }
+test('group page shows think, certificate and newspaper sections', async () => {
+  await openVault12();
+  ok(q('#think') && q('#think').textContent.includes('까닭'), 'think'); ok(q('#cert-form'), 'cert form'); ok(q('#news-form'), 'news form');
+  eq(qa('#news-form input[data-promise]').length, 5);
+});
+test('certificate shows group, members and the pledge', async () => {
+  await openVault12();
+  setVal('#cut', '쉬는 시간 스마트폰'); setVal('#save', '군것질 돈'); setVal('#from', '11월 20일'); setVal('#to', '12월 20일');
+  await click('#cert-make');
+  const t = q('#cert').textContent;
+  ok(t.includes('3모둠') && t.includes('12') && t.includes('18') && t.includes('쉬는 시간 스마트폰') && t.includes('군것질 돈') && t.includes('11월 20일'), t);
+});
+test('newspaper shows headline, facts, donors and slogan, and survives reload', async () => {
+  await openVault12();
+  setVal('#news-place', '대구'); setVal('#fact1', '광문사에서 제안'); setVal('#fact2', '부인 일곱 명'); setVal('#fact3', '석 달 단연'); setVal('#slogan', '함께 갚아요');
+  setVal('#news-form input[data-promise="13"]', '책 읽기');
+  await click('#news-make');
+  let t = q('#news').textContent;
+  ok(t.includes('3모둠') && t.includes('대구에서 시작된 국채보상운동') && t.includes('부인 일곱 명') && t.includes('13번') && t.includes('책 읽기') && t.includes('함께 갚아요'), t);
+  await reloadApp(); eq(W().location.hash, '#group'); t = q('#news').textContent; ok(t.includes('함께 갚아요'), 'kept after reload');
+});
+test('typed text is shown as text, not as HTML', async () => {
+  await openVault12();
+  setVal('#slogan', '<b>굵게</b>'); await click('#news-make');
+  ok(!q('#news .slogan b'), 'no b element in slogan'); ok(q('#news .slogan').textContent.includes('<b>굵게</b>'));
+});
+
+// ---------------- Task 4: videos and library ----------------
+test('mission video loads only after pressing the button', async () => {
+  await pick(12);
+  ok(q('#video-slot .video-btn'), 'button'); ok(!q('#video-slot iframe'), 'no iframe yet');
+  await click('#video-slot .video-btn');
+  const f = q('#video-slot iframe'); ok(f && f.src.includes('youtube-nocookie.com/embed/egeQ1xiwZ7Q'), 'iframe src');
+});
+test('mission 5 has no video button', async () => {
+  await pick(6); eq(W().Escape.missionFor(6), 5); ok(!q('#video-slot .video-btn'));
+});
+test('library lists the four videos', async () => {
+  await go('#library');
+  eq(qa('.lib-item').length, 4); ok(D().body.innerText.includes('대구미래교육연구원') && D().body.innerText.includes('EBS'));
+});
+
+// ---------------- Task 5: teacher ----------------
+async function teacher() { await fresh(); await go('#teacher'); setVal('#pin', '4129'); await click('#pin-ok'); }
+test('teacher screen needs the PIN', async () => {
+  await fresh(); await go('#teacher');
+  ok(!q('.code-row'), 'locked'); setVal('#pin', '1907'); await click('#pin-ok'); ok(!q('.code-row'), 'wrong pin stays locked');
+  setVal('#pin', '4129'); await click('#pin-ok'); eq(qa('.code-row').length, 4);
+  ok(q('#codes').textContent.includes('37160') && q('#codes').textContent.includes('71603'));
+});
+test('gauge fills 65만 원 per student, toggles, and celebrates at 20', async () => {
+  await teacher();
+  eq(qa('.coin[data-no]').length, 20);
+  await click('.coin[data-no="1"]'); ok(q('#gauge-won').textContent.includes('65만 원'), q('#gauge-won').textContent);
+  await click('.coin[data-no="1"]'); ok(q('#gauge-won').textContent.includes('0원'), 'toggled off');
+  for (const b of qa('.coin[data-no]')) { b.click(); await wait(20); }
+  await wait(150); ok(q('#gauge-won').textContent.includes('1,300만 원')); ok(q('#celebrate') && !q('#celebrate').hidden, 'celebrate');
+});
+test('reset clears this device', async () => {
+  await pick(12); await teacher(); W().confirm = () => true; await click('#reset');
+  eq(W().Escape.store.get('me'), null); eq(W().Escape.store.get('gauge'), null);
+});
+
+// ---------------- runner ----------------
+(async () => {
+  await new Promise(r => { if (D() && D().readyState === 'complete') r(); else frame().onload = () => r(); });
+  await wait(200);
+  let pass = 0, fail = 0;
+  for (const t of T) {
+    try { await t.fn(); pass++; out.innerHTML += '<span class="p">PASS</span> ' + t.name + '\n'; }
+    catch (e) { fail++; out.innerHTML += '<span class="f">FAIL</span> ' + t.name + ' :: ' + e.message + '\n'; }
+  }
+  document.getElementById('sum').textContent = 'PASS ' + pass + ' / FAIL ' + fail + ' / TOTAL ' + T.length;
+  window.__done = { pass, fail, total: T.length };
+})();
+</script>
+</body></html>

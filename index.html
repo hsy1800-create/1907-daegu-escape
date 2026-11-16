@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1907 대구 교실 방탈출</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root { --dark: #1E1E1E; --yel: #FFD95A; --pale: #FFF3C4; --bg: #F4F4F4; --brown: #9C7B6B; --red: #D62828; --gray: #5f5f5f; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--dark); }
+body { font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-size: 18px; line-height: 1.5; word-break: keep-all; }
+#app { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+.card { background: #fff; border: 3px solid var(--dark); border-radius: 18px; box-shadow: 5px 5px 0 var(--dark); padding: 18px 20px; margin: 18px 0; }
+.card.pale { background: var(--pale); }
+.chip { display: inline-block; background: var(--dark); color: #fff; font-weight: 800; font-size: 14px; padding: 4px 14px; border-radius: 999px; }
+.chip.yel { background: var(--yel); color: var(--dark); border: 2px solid var(--dark); }
+.chip.red { background: var(--red); }
+.big-title { font-weight: 900; font-size: clamp(30px, 7vw, 52px); line-height: 1.2; margin: 10px 0; text-align: center; }
+.outline { color: var(--yel); -webkit-text-stroke: 7px var(--dark); paint-order: stroke fill; text-shadow: 3px 4px 0 var(--dark); }
+.outline.white { color: #fff; }
+h1 { font-weight: 900; font-size: 28px; margin: 6px 0 4px; }
+h1 .hl { color: var(--yel); -webkit-text-stroke: 5px var(--dark); paint-order: stroke fill; }
+h2 { font-weight: 900; font-size: 22px; margin: 0 0 8px; }
+.sub { color: var(--gray); font-size: 16px; margin: 0; }
+.center { text-align: center; }
+.btn { display: inline-block; font: inherit; font-weight: 800; font-size: 18px; border: 3px solid var(--dark); border-radius: 14px; padding: 12px 22px; background: var(--yel); color: var(--dark); box-shadow: 3px 3px 0 var(--dark); cursor: pointer; text-decoration: none; }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--dark); }
+.btn.dark { background: var(--dark); color: #fff; }
+.btn.white { background: #fff; }
+.btn.small { font-size: 15px; padding: 8px 14px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.group-row { display: grid; grid-template-columns: 76px repeat(5, 1fr); gap: 10px; align-items: center; margin: 10px 0; }
+.group-row .label { font-weight: 900; font-size: 16px; }
+.num { font: inherit; font-weight: 900; font-size: 26px; padding: 14px 0; border: 3px solid var(--dark); border-radius: 14px; background: #fff; box-shadow: 3px 3px 0 var(--dark); cursor: pointer; }
+.num:hover { background: var(--pale); }
+.clue { position: relative; padding-right: 92px; font-size: 19px; }
+.clue svg { position: absolute; right: 14px; bottom: 12px; width: 64px; height: 64px; }
+mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 900; }
+.extra { margin-top: 12px; padding: 12px 14px; background: var(--pale); border: 2px dashed var(--brown); border-radius: 12px; font-size: 17px; }
+.qline { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+.qline input { font: inherit; font-weight: 900; width: 96px; text-align: center; padding: 8px; border: 3px solid var(--dark); border-radius: 12px; background: var(--pale); }
+.msg { min-height: 28px; font-weight: 800; margin-top: 12px; }
+.msg.bad { color: var(--red); }
+.digit { display: inline-flex; width: 120px; height: 140px; align-items: center; justify-content: center; font-size: 88px; font-weight: 900; background: #fff; border: 4px solid var(--dark); border-radius: 18px; box-shadow: 6px 6px 0 var(--dark); color: var(--red); }
+.seats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+.seat { text-align: center; font-size: 14px; font-weight: 800; color: var(--gray); }
+.seat .who { display: block; font-size: 15px; color: var(--dark); }
+.seat.me .who { background: var(--yel); border-radius: 8px; }
+.code-box { width: 100%; font: inherit; font-size: 40px; font-weight: 900; text-align: center; padding: 10px 0; border: 3px solid var(--dark); border-radius: 14px; background: #fff; box-shadow: 3px 3px 0 var(--dark); }
+.lockart { width: 120px; height: 120px; display: block; margin: 0 auto; }
+.open-anim { animation: pop .6s ease-out; }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+.step { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 50%; background: var(--yel); border: 3px solid var(--dark); font-weight: 900; margin-right: 8px; }
+.field { display: block; margin: 10px 0; font-weight: 800; }
+.field input { display: block; width: 100%; margin-top: 4px; font: inherit; font-weight: 600; padding: 10px 12px; border: 2px solid var(--dark); border-radius: 10px; background: #fff; }
+.inline-input { font: inherit; font-weight: 800; width: 120px; padding: 6px 8px; border: 2px solid var(--dark); border-radius: 10px; background: #fff; text-align: center; }
+.promises { display: grid; grid-template-columns: 64px 1fr; gap: 8px 10px; align-items: center; }
+.promises input { font: inherit; padding: 8px 10px; border: 2px solid var(--dark); border-radius: 10px; }
+.cert { border: 6px double var(--dark); outline: 4px solid var(--yel); outline-offset: -16px; border-radius: 16px; background: #fff; padding: 30px 28px; margin: 14px 0; position: relative; }
+.cert h3 { text-align: center; font-weight: 900; font-size: 26px; margin: 0 0 14px; }
+.cert p { margin: 8px 0; }
+.cert .seal { position: absolute; right: 26px; bottom: 22px; width: 78px; height: 78px; border: 3px dashed var(--red); color: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; transform: rotate(-12deg); text-align: center; }
+.weeks { display: flex; gap: 10px; margin-top: 10px; }
+.week { flex: 1; border: 2px solid var(--dark); border-radius: 12px; padding: 8px; text-align: center; font-weight: 800; background: #fff; cursor: pointer; }
+.week.on { background: var(--yel); }
+.news { background: #fffdf6; border: 3px solid var(--dark); border-radius: 12px; padding: 18px; margin: 14px 0; }
+.news .mast { text-align: center; font-weight: 900; font-size: 30px; border-bottom: 5px solid var(--dark); padding-bottom: 6px; }
+.news .date { text-align: center; color: var(--gray); font-size: 14px; margin: 4px 0 12px; }
+.news .head { font-weight: 900; font-size: 22px; margin: 6px 0 10px; }
+.news .cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+.news .box { border: 2px solid #bbb; border-radius: 10px; padding: 10px 12px; }
+.news .slogan { margin-top: 12px; background: var(--pale); border: 3px solid var(--dark); border-radius: 18px; padding: 12px; text-align: center; font-weight: 900; font-size: 20px; }
+.codes { width: 100%; border-collapse: collapse; font-size: 17px; }
+.codes th, .codes td { border: 2px solid var(--dark); padding: 8px 10px; text-align: center; }
+.codes th { background: var(--pale); }
+.codes .code { font-weight: 900; font-size: 24px; letter-spacing: 4px; color: var(--red); }
+.bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 4px; border: 3px solid var(--dark); border-radius: 14px; padding: 8px; background: #fff; box-shadow: 4px 4px 0 var(--dark); }
+.bar span { height: 46px; border-radius: 6px; border: 2px solid var(--dark); background: #EDEDED; }
+.bar span.on { background: var(--yel); }
+.won { text-align: center; font-weight: 900; font-size: 34px; margin: 14px 0 6px; }
+.coins { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 12px; }
+.coin { font: inherit; font-weight: 900; font-size: 18px; aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--dark); background: #fff; cursor: pointer; }
+.coin.on { background: var(--yel); }
+#celebrate { text-align: center; }
+@media (max-width: 520px) { .coins { grid-template-columns: repeat(5, 1fr); } .bar span { height: 30px; } }
+.video { margin-top: 14px; }
+.video-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit; font-weight: 800; border: 2px solid var(--dark); border-radius: 12px; background: #fff; padding: 10px 12px; cursor: pointer; }
+.video-btn .play { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.video-btn small { display: block; color: var(--gray); font-weight: 600; }
+.frame { position: relative; padding-top: 56.25%; margin-top: 10px; border: 3px solid var(--dark); border-radius: 12px; overflow: hidden; background: #000; }
+.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.note { font-size: 14px; color: var(--gray); margin-top: 6px; }
+@media print { .no-print, .topbar { display: none !important; } body { background: #fff; } .card { box-shadow: none; } }
+@media (max-width: 520px) { .news .cols { grid-template-columns: 1fr; } .cert { padding: 24px 18px; } .cert p[style] { padding-right: 0 !important; } .cert .seal { position: static; margin: 10px 0 0 auto; } }
+@media (max-width: 520px) { body { font-size: 16px; } .group-row { grid-template-columns: 56px repeat(5, 1fr); gap: 6px; } .num { font-size: 20px; padding: 10px 0; } .digit { width: 96px; height: 116px; font-size: 70px; } .code-box { font-size: 30px; } .clue { padding-right: 20px; } .clue svg { display: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===================== data and rules ===================== */
+(function () {
+  const TEACHER_PIN = '4129';
+  const STUDENTS = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 21, 22, 23];
+  const WON_PER_STUDENT = 650000;
+
+  const MISSIONS = {
+    1: {
+      title: '광문사의 꿈', digit: '6', accept: ['6', '1906'],
+      question: '광문사가 세워진 해', before: '190', after: '년',
+      clue: '1906년 1월, 대구에 ‘광문사’가 세워졌어요. 광문사 사람들은 나라의 힘을 기르려면 교육이 필요하다고 보고, 학교 세우기에 힘썼어요.',
+      key: '1906년',
+      extra: '광문사의 서상돈은 나라가 어려워진 까닭이 백성들이 배우지 못한 데 있다고 보았어요. 그래서 무엇보다 교육을 강조했어요.',
+      video: { id: 'Z6Erzwj3F04', title: '[근현대 대구 이야기] 4. 국채 보상 운동의 과거, 현재가 우리에게 주는 의미', channel: '대구미래교육연구원', length: '4분 45초' }
+    },
+    2: {
+      title: '운동의 시작', digit: '0', accept: ['0', '1907'],
+      question: '국채보상운동이 시작된 해', before: '19', after: '7년',
+      clue: '1907년 1월 29일, 대구 광문사 모임에서 김광제와 서상돈이 나랏빚 1,300만 원을 국민의 힘으로 갚자고 제안했어요.',
+      key: '1907년',
+      extra: '일본이 억지로 빌려준 돈(차관)이 쌓여, 나라가 갚아야 할 빚이 1,300만 원이나 되었어요.',
+      video: { id: 'vier53PNHRk', title: '국사이야기, 국채보상운동', channel: 'EBS 교양', length: '1분 52초' }
+    },
+    3: {
+      title: '서상돈의 계산', digit: '3', accept: ['3'],
+      question: '담배를 끊자고 한 기간', before: '', after: '달',
+      clue: '서상돈은 이렇게 제안했어요. “2천만 국민이 석 달 동안 담배를 끊고, 한 사람이 한 달에 20전씩 모으면 1,300만 원 가까이 모을 수 있어요.”',
+      key: '석 달',
+      extra: '나랏빚을 갚으려고 담배를 끊는 일을 ‘단연’이라고 해요.',
+      video: { id: 'egeQ1xiwZ7Q', title: '1,300만원에 나라를 뺏겨? 못뺏겨~어딜뺏겨!!', channel: '대구TV (대구광역시 공식)', length: '6분 25초' }
+    },
+    4: {
+      title: '남일동 부인들', digit: '7', accept: ['7'],
+      question: '패물폐지부인회를 만든 부인', before: '', after: '명',
+      clue: '대구 남일동에 사는 부인 일곱 명이 ‘패물폐지부인회’를 만들었어요. 은반지와 은비녀를 빼서 나랏빚 갚는 데 보태자는 뜻이었지요.',
+      key: '일곱 명',
+      extra: '여성들이 모임을 만들어 국채보상운동에 참여한 첫 사례로 꼽혀요.',
+      video: { id: '0tZ8yMaFJ1o', title: '나라의 빚을 갚아 주권을 지키자, 국채보상운동', channel: 'kculturechannel', length: '5분 5초' }
+    },
+    5: {
+      title: '대구시민의 날', digit: '1', accept: ['1', '21'],
+      question: '대구시민의 날', before: '2월 2', after: '일',
+      clue: '1907년 2월 21일, 대구 북후정에 사람들이 모여 국채보상운동을 시작했어요. 오늘날 대구는 이날을 ‘대구시민의 날’로 기념해요.',
+      key: '2월 21일',
+      extra: '대구시는 2월 21일부터 2월 28일까지를 대구시민주간으로 정해 국채보상운동과 2.28 민주운동을 함께 기려요.',
+      video: null
+    }
+  };
+
+  function groupOf(no) {
+    const i = STUDENTS.indexOf(Number(no));
+    if (i < 0) return null;
+    return { group: Math.floor(i / 5) + 1, seat: (i % 5) + 1 };
+  }
+  function missionFor(no) {
+    const g = groupOf(no);
+    if (!g) return null;
+    return ((g.seat - 1) + (g.group - 1)) % 5 + 1;
+  }
+  function groupCode(group) {
+    let code = '';
+    for (let seat = 1; seat <= 5; seat++) code += MISSIONS[((seat - 1) + (group - 1)) % 5 + 1].digit;
+    return code;
+  }
+  function normalize(input) {
+    return String(input == null ? '' : input)
+      .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .replace(/\s+/g, '');
+  }
+  function checkAnswer(mission, input) {
+    const m = MISSIONS[mission];
+    if (!m) return false;
+    const v = normalize(input).replace(/(년|달|명|일)$/, '');
+    return v !== '' && m.accept.includes(v);
+  }
+  function checkGroupCode(group, input) {
+    return normalize(input) === groupCode(group);
+  }
+  function gaugeWon(doneCount) { return doneCount * WON_PER_STUDENT; }
+
+  function makeStore(backend) {
+    let mem = {};
+    const P = 'escape.';
+    return {
+      get(k) {
+        try { const v = backend && backend.getItem(P + k); if (v != null) return JSON.parse(v); } catch (e) { /* storage blocked */ }
+        return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null;
+      },
+      set(k, v) {
+        mem[k] = v;
+        try { backend && backend.setItem(P + k, JSON.stringify(v)); } catch (e) { /* keep in memory */ }
+      },
+      clear() {
+        const keys = Object.keys(mem);
+        mem = {};
+        try {
+          if (backend) {
+            const all = [];
+            for (let i = 0; i < (backend.length || 0); i++) all.push(backend.key(i));
+            all.concat(keys.map(k => P + k)).forEach(k => { if (k && k.indexOf(P) === 0) backend.removeItem(k); });
+          }
+        } catch (e) { /* ignore */ }
+      }
+    };
+  }
+  let ls = null;
+  try { ls = window.localStorage; } catch (e) { ls = null; }
+
+  window.Escape = {
+    TEACHER_PIN, STUDENTS, MISSIONS, WON_PER_STUDENT,
+    groupOf, missionFor, groupCode, checkAnswer, checkGroupCode, gaugeWon, makeStore,
+    store: makeStore(ls)
+  };
+})();
+</script>
+
+<script>
+/* ===================== screens ===================== */
+(function () {
+  const E = window.Escape, S = E.store;
+  const app = document.getElementById('app');
+  const SEAT = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ICON = {
+    magnifier: '<svg viewBox="0 0 64 64" aria-hidden="true"><line x1="40" y1="40" x2="58" y2="58" stroke="#1E1E1E" stroke-width="11" stroke-linecap="round"/><line x1="40" y1="40" x2="58" y2="58" stroke="#9C7B6B" stroke-width="6" stroke-linecap="round"/><circle cx="26" cy="26" r="19" fill="#EAF0F4" stroke="#1E1E1E" stroke-width="5"/><text x="26" y="34" text-anchor="middle" font-size="22" font-weight="900" fill="#1E1E1E">?</text></svg>',
+    lock: '<svg class="lockart" viewBox="0 0 120 120" aria-hidden="true"><rect x="32" y="12" width="56" height="70" rx="28" fill="none" stroke="#1E1E1E" stroke-width="10"/><rect x="18" y="52" width="84" height="60" rx="12" fill="#FFD95A" stroke="#1E1E1E" stroke-width="4"/><circle cx="60" cy="76" r="8" fill="#1E1E1E"/><rect x="56" y="80" width="8" height="18" rx="3" fill="#1E1E1E"/></svg>',
+    open: '<svg class="lockart open-anim" viewBox="0 0 120 120" aria-hidden="true"><path d="M32 52 V40 a28 28 0 0 1 56 0" fill="none" stroke="#1E1E1E" stroke-width="10" transform="translate(-22 -14) rotate(-18 60 40)"/><rect x="18" y="52" width="84" height="60" rx="12" fill="#FFD95A" stroke="#1E1E1E" stroke-width="4"/><circle cx="60" cy="76" r="8" fill="#1E1E1E"/><rect x="56" y="80" width="8" height="18" rx="3" fill="#1E1E1E"/></svg>'
+  };
+
+  function me() { const no = S.get('me'); return no && E.groupOf(no) ? Number(no) : null; }
+  function members(group) { return E.STUDENTS.filter(n => E.groupOf(n).group === group); }
+  function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+
+  /* ---------- start ---------- */
+  function startView() {
+    let rows = '';
+    for (let g = 1; g <= 4; g++) {
+      rows += '<div class="group-row"><span class="label">' + g + '모둠</span>' +
+        members(g).map(n => '<button class="num" data-no="' + n + '">' + n + '</button>').join('') + '</div>';
+    }
+    app.innerHTML =
+      '<div class="center" style="margin-top:12px"><span class="chip">1907 대구 국채보상운동</span>' +
+      '<div class="big-title"><span class="outline">나랏빚 ‘1,300만 원’</span><br><span class="outline white">갚는 </span><span class="outline">교실 방탈출</span></div>' +
+      '<p class="sub">단서를 읽고 나만의 비밀 숫자를 찾아요. 모둠원 다섯 명의 숫자를 모으면 금고가 열려요!</p></div>' +
+      '<div class="card"><h2>내 번호를 눌러요</h2>' + rows + '</div>' +
+      '<div class="row" style="justify-content:space-between"><a class="btn white small" href="#library">영상 자료실</a><a class="btn white small" href="#teacher">선생님</a></div>';
+    app.querySelectorAll('button[data-no]').forEach(b => b.addEventListener('click', () => {
+      S.set('me', Number(b.dataset.no)); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0);
+      go('#mission');
+    }));
+  }
+
+  /* ---------- mission ---------- */
+  function missionView() {
+    const no = me(); if (!no) return go('#start');
+    const { group, seat } = E.groupOf(no), mn = E.missionFor(no), m = E.MISSIONS[mn];
+    const solved = !!S.get('solved'), wrong = S.get('wrong') || 0;
+    const clueHtml = wrong >= 2 ? esc(m.clue).replace(esc(m.key), '<mark>' + esc(m.key) + '</mark>') : esc(m.clue);
+    let html =
+      '<div class="topbar"><a class="btn white small" href="#start">처음으로</a><span class="chip">' + group + '모둠 ' + SEAT[seat - 1] + ' 탐정</span></div>' +
+      '<h1>' + no + '번 탐정, 너는 <span class="hl">' + group + '모둠</span>의 ' + SEAT[seat - 1] + ' 탐정!</h1>' +
+      '<p class="sub">단서를 읽고 질문의 빈칸을 채우면 나만의 비밀 숫자가 나와요.</p>' +
+      '<div class="card"><span class="chip yel">미션 ' + mn + '</span><h2 id="m-title" style="margin-top:8px">' + esc(m.title) + '</h2>' +
+      '<div class="clue" id="clue">' + clueHtml + ICON.magnifier + '</div>' +
+      '<div style="margin-top:12px"><button class="btn white small" id="extra-btn">추가 단서 보기</button></div>' +
+      '<div class="extra" id="extra" hidden>' + esc(m.extra) + '</div>' +
+      '<div id="video-slot"></div></div>';
+    if (!solved) {
+      html += '<div class="card pale"><h2>질문</h2>' +
+        '<div class="qline"><span>' + esc(m.question) + ':</span><span>' + esc(m.before) + '</span><input id="answer" inputmode="numeric" autocomplete="off" maxlength="4" aria-label="빈칸"><span>' + esc(m.after) + '</span></div>' +
+        '<button class="btn dark" id="check">확인</button><div class="msg" id="msg"></div></div>';
+    } else {
+      html += '<div class="card pale center"><h2>나만의 비밀 숫자</h2><div class="digit open-anim" id="digit">' + m.digit + '</div>' +
+        '<p id="slot" style="font-weight:900;font-size:20px">' + group + '모둠 금고 비밀번호의 ' + SEAT[seat - 1] + ' 자리</p>' +
+        seatList(group, no) +
+        '<p class="sub">모둠원에게 숫자를 물어보고, 자리 순서대로 모아 금고를 열어요.</p>' +
+        '<button class="btn" id="to-vault" style="margin-top:12px">모둠 금고 열러 가기</button></div>';
+    }
+    app.innerHTML = html;
+    const xb = document.getElementById('extra-btn');
+    xb.addEventListener('click', () => { const x = document.getElementById('extra'); x.hidden = !x.hidden; xb.textContent = x.hidden ? '추가 단서 보기' : '추가 단서 접기'; });
+    if (window.EscapeVideo) window.EscapeVideo(document.getElementById('video-slot'), m.video);
+    if (!solved) {
+      const input = document.getElementById('answer'), msg = document.getElementById('msg');
+      const check = () => {
+        if (E.checkAnswer(mn, input.value)) { S.set('solved', true); render(); return; }
+        const w = (S.get('wrong') || 0) + 1; S.set('wrong', w);
+        if (w >= 2) { render(); const m2 = document.getElementById('msg'); m2.className = 'msg bad'; m2.textContent = '노란색으로 표시한 부분을 다시 읽어 봐요!'; }
+        else { msg.className = 'msg bad'; msg.textContent = '아쉬워요. 단서를 다시 읽어 봐요.'; }
+      };
+      document.getElementById('check').addEventListener('click', check);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+    } else {
+      document.getElementById('to-vault').addEventListener('click', () => go('#vault'));
+    }
+  }
+  function seatList(group, mine) {
+    return '<div class="seats">' + members(group).map((n, i) =>
+      '<div class="seat' + (n === mine ? ' me' : '') + '">' + SEAT[i] + '<span class="who">' + n + '번</span></div>').join('') + '</div>';
+  }
+
+  /* ---------- vault ---------- */
+  function vaultView() {
+    const no = me(); if (!no) return go('#start');
+    const { group } = E.groupOf(no);
+    if (S.get('vault')) return go('#group');
+    const boxes = members(group).map((n, i) =>
+      '<div><input class="code-box" inputmode="numeric" maxlength="1" aria-label="' + SEAT[i] + ' 자리"><div class="seat">' + SEAT[i] + '<span class="who">' + n + '번</span></div></div>').join('');
+    app.innerHTML =
+      '<div class="topbar"><a class="btn white small" href="#mission">내 미션 보기</a><span class="chip">' + group + '모둠 금고</span></div>' +
+      '<div class="card center">' + ICON.lock + '<h1>' + group + '모둠 금고</h1>' +
+      '<p class="sub">모둠원 다섯 명의 비밀 숫자를 자리 순서대로 넣어요.</p>' +
+      '<div class="seats" style="margin-top:16px">' + boxes + '</div>' +
+      '<button class="btn dark" id="open">금고 열기</button><div class="msg bad" id="vault-msg"></div></div>';
+    const inputs = [...app.querySelectorAll('.code-box')];
+    inputs.forEach((b, i) => b.addEventListener('input', () => { if (b.value && inputs[i + 1]) inputs[i + 1].focus(); }));
+    document.getElementById('open').addEventListener('click', () => {
+      const code = inputs.map(b => b.value).join('');
+      if (E.checkGroupCode(group, code)) { S.set('vault', true); go('#group'); return; }
+      const w = (S.get('vaultWrong') || 0) + 1; S.set('vaultWrong', w);
+      const first = members(group)[0];
+      document.getElementById('vault-msg').textContent = w >= 3
+        ? '아직 안 열려요. 자리 순서대로 넣었나요? 첫째 칸은 ' + first + '번의 숫자예요.'
+        : '아직 안 열려요. 모둠원 숫자를 다시 확인해요.';
+    });
+  }
+
+  /* ---------- group (activities come later) ---------- */
+  function groupView() {
+    const no = me(); if (!no) return go('#start');
+    if (!S.get('vault')) return go('#vault');
+    const { group } = E.groupOf(no);
+    app.innerHTML = '<div class="card center">' + ICON.open + '<h1>' + group + '모둠 금고가 열렸어요!</h1></div><div id="group-body"></div>';
+    if (window.EscapeGroup) window.EscapeGroup(document.getElementById('group-body'), group);
+  }
+
+  const routes = { '#start': startView, '#mission': missionView, '#vault': vaultView, '#group': groupView };
+  window.EscapeRoutes = routes;
+  function render() {
+    const h = location.hash;
+    if (routes[h]) { routes[h](); window.scrollTo(0, 0); return; }
+    const no = me();
+    if (!no) return go('#start');
+    return go(S.get('vault') ? '#group' : '#mission');
+  }
+  window.EscapeRender = render;
+  window.addEventListener('hashchange', render);
+  window.addEventListener('DOMContentLoaded', render);
+  if (document.readyState !== 'loading') render();
+})();
+</script>
+
+<script>
+/* ===================== videos and library ===================== */
+(function () {
+  const E = window.Escape;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function videoBlock(slot, v, label) {
+    if (!v) { slot.innerHTML = ''; return; }
+    slot.innerHTML = '<div class="video no-print"><button class="video-btn" type="button"><span class="play">▶</span><span>' +
+      esc(label || '영상으로 더 알아보기') + '<small>' + esc(v.title) + ' | ' + esc(v.channel) + ' | ' + esc(v.length) + '</small></span></button></div>';
+    slot.querySelector('.video-btn').addEventListener('click', () => {
+      if (slot.querySelector('iframe')) return;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = '<div class="frame"><iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(v.id) +
+        '?rel=0" title="' + esc(v.title) + '" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>' +
+        '<div class="note">영상이 안 나오면 단서 카드만으로도 답을 찾을 수 있어요.</div>';
+      slot.querySelector('.video').appendChild(wrap);
+    });
+  }
+  window.EscapeVideo = (slot, v) => videoBlock(slot, v);
+
+  window.EscapeRoutes['#library'] = function () {
+    const app = document.getElementById('app');
+    const items = [1, 2, 3, 4, 5].filter(i => E.MISSIONS[i].video);
+    app.innerHTML = '<div class="topbar"><a class="btn white small" href="#">돌아가기</a><span class="chip">영상 자료실</span></div>' +
+      '<h1>영상 <span class="hl">자료실</span></h1><p class="sub">국채보상운동을 더 알고 싶을 때 봐요. 영상이 안 나오면 선생님께 말해요.</p>' +
+      items.map(i => '<div class="card lib-item"><span class="chip yel">미션 ' + i + ' ' + esc(E.MISSIONS[i].title) + '</span><div id="lib-' + i + '"></div></div>').join('');
+    items.forEach(i => videoBlock(document.getElementById('lib-' + i), E.MISSIONS[i].video, E.MISSIONS[i].video.title));
+  };
+})();
+
+/* ===================== teacher ===================== */
+(function () {
+  const E = window.Escape, S = E.store;
+  let unlocked = false;
+  const fmt = won => won === 0 ? '0원' : (won % 10000 === 0 ? (won / 10000).toLocaleString('ko-KR') + '만 원' : won.toLocaleString('ko-KR') + '원');
+  const SEAT = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
+
+  window.EscapeRoutes['#teacher'] = function () {
+    const app = document.getElementById('app');
+    if (!unlocked) {
+      app.innerHTML = '<div class="topbar"><a class="btn white small" href="#start">처음으로</a><span class="chip">선생님</span></div>' +
+        '<div class="card center"><h1>선생님 화면</h1><p class="sub">비밀번호를 넣어요.</p>' +
+        '<div class="row" style="justify-content:center;margin-top:12px"><input id="pin" type="password" inputmode="numeric" class="inline-input" maxlength="8" aria-label="비밀번호">' +
+        '<button class="btn dark" id="pin-ok">열기</button></div><div class="msg bad" id="t-msg"></div></div>';
+      const ok = () => {
+        if (document.getElementById('pin').value.trim() === E.TEACHER_PIN) { unlocked = true; window.EscapeRender(); }
+        else document.getElementById('t-msg').textContent = '비밀번호가 달라요.';
+      };
+      document.getElementById('pin-ok').addEventListener('click', ok);
+      document.getElementById('pin').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+      return;
+    }
+    let rows = '';
+    for (let g = 1; g <= 4; g++) {
+      const mem = E.STUDENTS.filter(n => E.groupOf(n).group === g);
+      rows += '<tr class="code-row"><td><b>' + g + '모둠</b></td><td class="code">' + E.groupCode(g) + '</td><td>' +
+        mem.map((n, i) => SEAT[i] + ' ' + n + '번(미션 ' + E.missionFor(n) + ')').join('<br>') + '</td></tr>';
+    }
+    const answers = [1, 2, 3, 4, 5].map(i => '<li>미션 ' + i + ' ' + E.MISSIONS[i].title + ': <b>' + E.MISSIONS[i].digit + '</b></li>').join('');
+    app.innerHTML = '<div class="topbar"><a class="btn white small" href="#start">처음으로</a><span class="chip red">선생님</span></div>' +
+      '<div class="card"><h2>1,300만 원 함께 채우기</h2><p class="sub">학생이 자기 약속을 발표하면 그 학생 번호를 눌러요. 한 명에 65만 원씩 채워져요.</p>' +
+      '<div class="bar" id="bar"></div><div class="won" id="gauge-won"></div>' +
+      '<div id="celebrate" hidden><div class="big-title"><span class="outline">1,300만 원 완성!</span></div><p style="font-weight:800">1907년 대구 사람들처럼 우리 반도 함께 힘을 모았어요.</p></div>' +
+      '<div class="coins" id="coins"></div></div>' +
+      '<div class="card"><h2>모둠 금고 비밀번호</h2><table class="codes" id="codes"><tr><th>모둠</th><th>비밀번호</th><th>자리와 미션</th></tr>' + rows + '</table>' +
+      '<p class="sub" style="margin-top:10px">미션 정답</p><ul style="margin:4px 0 0">' + answers + '</ul></div>' +
+      '<div class="card"><h2>이 기기 기록 지우기</h2><p class="sub">다음 반이나 다음 시간에 같은 기기를 쓸 때 눌러요. 학생 진행과 게이지가 모두 지워져요.</p>' +
+      '<button class="btn white" id="reset">이 기기 기록 지우기</button></div>';
+
+    function draw() {
+      const done = S.get('gauge') || [];
+      const won = E.gaugeWon(done.length);
+      document.getElementById('bar').innerHTML = E.STUDENTS.map((n, i) => '<span class="' + (i < done.length ? 'on' : '') + '"></span>').join('');
+      document.getElementById('gauge-won').textContent = fmt(won) + ' / 1,300만 원';
+      document.getElementById('celebrate').hidden = done.length < E.STUDENTS.length;
+      document.getElementById('coins').innerHTML = E.STUDENTS.map(n => '<button class="coin' + (done.includes(n) ? ' on' : '') + '" data-no="' + n + '">' + n + '</button>').join('');
+      document.querySelectorAll('.coin[data-no]').forEach(b => b.addEventListener('click', () => {
+        const no = Number(b.dataset.no), cur = S.get('gauge') || [];
+        S.set('gauge', cur.includes(no) ? cur.filter(x => x !== no) : cur.concat(no));
+        draw();
+      }));
+    }
+    draw();
+    document.getElementById('reset').addEventListener('click', () => {
+      if (!window.confirm('이 기기의 학생 진행과 게이지를 모두 지울까요?')) return;
+      S.clear(); draw();
+    });
+  };
+})();
+
+/* ===================== group activities ===================== */
+(function () {
+  const E = window.Escape, S = E.store;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const members = g => E.STUDENTS.filter(n => E.groupOf(n).group === g);
+  const blank = v => (v && String(v).trim()) ? esc(v) : '<span style="color:#aaa">(        )</span>';
+
+  function certHtml(group, c) {
+    const weeks = c.weeks || [false, false, false, false];
+    return '<div class="cert" id="cert"><h3>국채보상 모둠 의연 증서</h3>' +
+      '<p><b>의연한 모둠</b> ' + group + '모둠 (' + members(group).map(n => n + '번').join(', ') + ')</p>' +
+      '<p><b>우리 모둠이 줄일 것</b> ' + blank(c.cut) + '</p>' +
+      '<p><b>우리 모둠이 모을 것</b> ' + blank(c.save) + '</p>' +
+      '<p><b>약속 기간</b> ' + blank(c.from) + '부터 ' + blank(c.to) + '까지</p>' +
+      '<p style="margin-top:16px;padding-right:90px">위 모둠은 국채보상운동의 뜻을 이어 위와 같이 약속하였기에 이 증서를 드립니다.</p>' +
+      '<div class="seal">칭찬<br>도장</div></div>' +
+      '<div class="no-print"><b>한 달 실천 체크</b> <span class="sub">약속을 지킨 주를 눌러요</span><div class="weeks">' +
+      weeks.map((on, i) => '<button class="week' + (on ? ' on' : '') + '" data-week="' + i + '">' + (i + 1) + '주' + (on ? ' ✔' : '') + '</button>').join('') + '</div></div>';
+  }
+  function newsHtml(group, n) {
+    const d = new Date();
+    const facts = (n.facts || []).filter(f => f && f.trim());
+    const pro = members(group).map(no => '<li>' + no + '번 ' + blank((n.promises || {})[no]) + '</li>').join('');
+    return '<div class="news" id="news"><div class="mast">대구 ' + group + '모둠 호외</div>' +
+      '<div class="date">' + d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 | 1907년 국채보상운동을 우리 모둠이 다시 알립니다</div>' +
+      '<div class="head">' + blank(n.place) + '에서 시작된 국채보상운동!</div>' +
+      '<div class="cols"><div class="box"><b>알게 된 사실</b><ol style="margin:6px 0 0;padding-left:20px">' +
+      (facts.length ? facts.map(f => '<li>' + esc(f) + '</li>').join('') : '<li style="color:#aaa">(아직 없음)</li>') + '</ol></div>' +
+      '<div class="box"><b>의연자 명단</b><ul style="margin:6px 0 0;padding-left:18px">' + pro + '</ul></div></div>' +
+      '<div class="slogan">' + blank(n.slogan) + '</div></div>';
+  }
+
+  window.EscapeGroup = function (box, group) {
+    const cert = S.get('cert') || {}, news = S.get('news') || {};
+    const mem = members(group);
+    box.innerHTML =
+      '<div class="card" id="think"><h2><span class="step">1</span>생각 나누기</h2>' +
+      '<p style="font-size:20px;font-weight:800">신분도 나이도 다른 사람들이 한마음으로 참여할 수 있었던 까닭은 무엇일까요?</p>' +
+      '<p class="sub">모둠원끼리 이야기한 뒤, 모둠의 생각을 한 문장으로 말해요.</p></div>' +
+
+      '<div class="card"><h2><span class="step">2</span>모둠 의연 증서</h2>' +
+      '<p class="sub">1907년 사람들이 담배를 끊고 돈을 모았듯이(단연), 우리 모둠이 줄일 것과 모을 것을 정해요.</p>' +
+      '<div id="cert-form" class="no-print">' +
+      '<label class="field">우리 모둠이 줄일 것<input id="cut" placeholder="예) 쉬는 시간 스마트폰"></label>' +
+      '<label class="field">우리 모둠이 모을 것<input id="save" placeholder="예) 군것질 한 번 참은 돈"></label>' +
+      '<div class="field">약속 기간 <input class="inline-input" id="from" placeholder="11월 20일"> 부터 <input class="inline-input" id="to" placeholder="12월 20일"> 까지</div>' +
+      '<button class="btn" id="cert-make">증서 완성하기</button></div><div id="cert-out"></div></div>' +
+
+      '<div class="card"><h2><span class="step">3</span>모둠 호외</h2>' +
+      '<p class="sub">1907년 대한매일신보는 의연금을 낸 사람들의 이름을 신문에 실어 운동을 널리 알렸어요. 우리 모둠도 호외로 알려요.</p>' +
+      '<div id="news-form" class="no-print">' +
+      '<div class="field">머리기사 <input class="inline-input" id="news-place" placeholder="어디"> 에서 시작된 국채보상운동!</div>' +
+      '<label class="field">알게 된 사실 1<input id="fact1"></label>' +
+      '<label class="field">알게 된 사실 2<input id="fact2"></label>' +
+      '<label class="field">알게 된 사실 3<input id="fact3"></label>' +
+      '<div class="field">의연자 명단 (모둠원 각자 약속 한 가지)<div class="promises" style="margin-top:6px">' +
+      mem.map(no => '<span>' + no + '번</span><input data-promise="' + no + '">').join('') + '</div></div>' +
+      '<label class="field">홍보 문구 (‘함께’라는 낱말을 넣어 한 줄로)<input id="slogan"></label>' +
+      '<button class="btn" id="news-make">호외 완성하기</button></div><div id="news-out"></div></div>' +
+
+      '<div class="row no-print" style="justify-content:space-between"><a class="btn white small" href="#library">영상 자료실</a><button class="btn white small" id="print">인쇄하기</button></div>';
+
+    const $ = id => box.querySelector('#' + id);
+    // restore inputs
+    ['cut', 'save', 'from', 'to'].forEach(k => { $(k).value = cert[k] || ''; });
+    $('news-place').value = news.place || '';
+    [0, 1, 2].forEach(i => { $('fact' + (i + 1)).value = (news.facts || [])[i] || ''; });
+    $('slogan').value = news.slogan || '';
+    box.querySelectorAll('input[data-promise]').forEach(inp => { inp.value = (news.promises || {})[inp.dataset.promise] || ''; });
+
+    function readCert() { const c = S.get('cert') || {}; ['cut', 'save', 'from', 'to'].forEach(k => { c[k] = $(k).value; }); return c; }
+    function readNews() {
+      const n = S.get('news') || {};
+      n.place = $('news-place').value; n.facts = [1, 2, 3].map(i => $('fact' + i).value); n.slogan = $('slogan').value;
+      n.promises = {}; box.querySelectorAll('input[data-promise]').forEach(inp => { n.promises[inp.dataset.promise] = inp.value; });
+      return n;
+    }
+    function showCert() {
+      const c = S.get('cert') || {};
+      $('cert-out').innerHTML = c.made ? certHtml(group, c) : '';
+      $('cert-out').querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => {
+        const cc = S.get('cert') || {}; cc.weeks = cc.weeks || [false, false, false, false];
+        cc.weeks[b.dataset.week] = !cc.weeks[b.dataset.week]; S.set('cert', cc); showCert();
+      }));
+    }
+    function showNews() { const n = S.get('news') || {}; $('news-out').innerHTML = n.made ? newsHtml(group, n) : ''; }
+
+    $('cert-form').addEventListener('input', () => { const c = readCert(); S.set('cert', c); if (c.made) showCert(); });
+    $('news-form').addEventListener('input', () => { const n = readNews(); S.set('news', n); if (n.made) showNews(); });
+    $('cert-make').addEventListener('click', () => { const c = readCert(); c.made = true; S.set('cert', c); showCert(); });
+    $('news-make').addEventListener('click', () => { const n = readNews(); n.made = true; S.set('news', n); showNews(); });
+    $('print').addEventListener('click', () => window.print());
+    showCert(); showNews();
+  };
+})();
+</script>
+</body>
+</html>
