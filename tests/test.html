@@ -216,7 +216,8 @@ test('history wording: one start date, plain 단연, documented 광문사 roles,
 
 // ---------------- runner ----------------
 (async () => {
-  await new Promise(r => { if (D() && D().readyState === 'complete') r(); else frame().onload = () => r(); });
+  // about:blank counts as 'complete' before the real page arrives, so wait for the app itself
+  for (let i = 0; i < 150 && !(W() && W().Escape && D().readyState === 'complete'); i++) await wait(100);
   await wait(200);
   let pass = 0, fail = 0;
   for (const t of T) {
