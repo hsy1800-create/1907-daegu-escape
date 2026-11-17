@@ -2,7 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8"><title>escape tests</title>
 <style>body{font:14px/1.5 monospace;margin:12px}iframe{width:420px;height:760px;border:1px solid #999;float:right}.f{color:#c00}.p{color:#080}</style></head>
 <body>
-<iframe id="app" src="../index.html"></iframe>
+<iframe id="app" src="../index.html?local"></iframe>
 <h3 id="sum">running…</h3>
 <pre id="out"></pre>
 <script>
@@ -57,6 +57,25 @@ test('every mission has clue and question; missions 1-4 have a video, mission 5 
   for (let i = 1; i <= 5; i++) { ok(M[i].title && M[i].clue && M[i].extra && M[i].question, 'mission ' + i); }
   for (let i = 1; i <= 4; i++) { ok(M[i].video && M[i].video.id, 'video ' + i); }
   eq(M[5].video, null);
+});
+
+// ---------------- Realtime Task 1: quiz data and shared state ----------------
+test('quizFor gives the four friends questions in seat order', () => {
+  const E = W().Escape, qs = E.quizFor(12);
+  eq(qs.map(x => x.friend), [13, 14, 16, 18]); eq(qs.map(x => x.mission), [4, 5, 1, 2]);
+  ok(qs.every(x => x.q && x.options.length === 4 && x.title), 'shape'); eq(E.quizFor(2), []);
+});
+test('every mission has a quiz with four options and a valid answer', () => {
+  const Q = W().Escape.QUIZ;
+  for (let i = 1; i <= 5; i++) { ok(Q[i].q, 'q' + i); eq(Q[i].options.length, 4); ok(Q[i].answer >= 0 && Q[i].answer < 4, 'answer ' + i); }
+  eq(W().Escape.COINS_NEEDED, 4);
+});
+test('sync stores, removes and clears shared data in local mode', () => {
+  const s = W().Escape.sync; let seen = null; const un = s.subscribe(t => { seen = t; });
+  s.set('donated/3', true); eq(s.tree().donated[3], true); eq(seen.donated[3], true);
+  s.set('groups/2/f/cut', '과자'); eq(s.tree().groups[2].f.cut, '과자');
+  s.set('donated/3', null); ok(!s.tree().donated || !s.tree().donated[3], 'removed');
+  s.clear(5); eq(s.tree(), { session: 5 }); un(); eq(s.status(), 'local');
 });
 
 // ---------------- Task 2: student flow ----------------
