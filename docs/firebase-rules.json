@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "$room.matches(/^[a-z0-9-]+$/) && $room.length <= 20",
+        ".write": "$room.matches(/^[a-z0-9-]+$/) && $room.length <= 20",
+        "session": { ".validate": "newData.isNumber()" },
+        "quiz": { "$no": { "$m": { ".validate": "newData.isBoolean()" } } },
+        "donated": { "$no": { ".validate": "newData.isBoolean()" } },
+        "groups": {
+          "$g": {
+            "f": { "$k": { ".validate": "newData.isString() && newData.val().length <= 200" } },
+            "p": { "$no": { ".validate": "newData.isString() && newData.val().length <= 200" } },
+            "weeks": { "$i": { ".validate": "newData.isBoolean()" } },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

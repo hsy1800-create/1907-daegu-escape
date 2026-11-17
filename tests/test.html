@@ -211,17 +211,33 @@ test('teacher screen needs the PIN', async () => {
   setVal('#pin', '4129'); await click('#pin-ok'); eq(qa('.code-row').length, 4);
   ok(q('#codes').textContent.includes('37160') && q('#codes').textContent.includes('71603'));
 });
-test('gauge fills 65만 원 per student, toggles, and celebrates at 20', async () => {
+test('teacher board shows donations live without any teacher clicks', async () => {
   await teacher();
-  eq(qa('.coin[data-no]').length, 20);
-  await click('.coin[data-no="1"]'); ok(q('#gauge-won').textContent.includes('65만 원'), q('#gauge-won').textContent);
-  await click('.coin[data-no="1"]'); ok(q('#gauge-won').textContent.includes('0원'), 'toggled off');
-  for (const b of qa('.coin[data-no]')) { b.click(); await wait(20); }
-  await wait(150); ok(q('#gauge-won').textContent.includes('1,300만 원')); ok(q('#celebrate') && !q('#celebrate').hidden, 'celebrate');
+  eq(qa('#board .cell[data-no]').length, 20); ok(!q('.coin[data-no]'), 'no teacher toggle buttons');
+  SY().set('donated/1', true); SY().set('quiz/3/2', true); await wait(80);
+  ok(q('#board .cell[data-no="1"]').classList.contains('on'), 'cell 1 on');
+  ok(q('#gauge-won').textContent.includes('65만 원'), q('#gauge-won').textContent);
+  ok(q('#groups-board').textContent.includes('3번'), 'group progress listed');
+  for (const n of W().Escape.STUDENTS) SY().set('donated/' + n, true);
+  await wait(80); ok(q('#gauge-won').textContent.includes('1,300만 원')); ok(!q('#celebrate').hidden, 'celebrate');
 });
-test('reset clears this device', async () => {
-  await pick(12); await teacher(); W().confirm = () => true; await click('#reset');
-  eq(W().Escape.store.get('me'), null); eq(W().Escape.store.get('gauge'), null);
+test('새 수업 시작 clears the class data and this device', async () => {
+  await pick(12); await teacher(); SY().set('donated/1', true);
+  W().confirm = () => true; await click('#reset');
+  const t = SY().tree(); ok(!t.donated, 'donations cleared'); ok(typeof t.session === 'number' && t.session > 0, 'new session');
+  eq(W().Escape.store.get('me'), null); eq(W().location.hash, '#start');
+});
+test('a new class session sends a student tablet back to the start', async () => {
+  await pick(12); setVal('#answer', '3'); await click('#check'); ok(q('#digit'), 'solved');
+  SY().clear(Date.now()); await wait(150);
+  eq(W().location.hash, '#start'); eq(W().Escape.store.get('me'), null);
+});
+test('a tablet seeing the class data for the first time keeps its progress', async () => {
+  await fresh();
+  W().Escape.store.set('session', null);   // this tablet has never seen a session
+  W().Escape.store.set('room', { session: 5 }); W().Escape.store.set('me', 12); W().Escape.store.set('solved', true);
+  W().location.hash = '#mission'; await reloadApp();
+  eq(W().location.hash, '#mission'); eq(W().Escape.store.get('me'), 12); eq(W().Escape.store.get('session'), 5); ok(q('#digit'), 'digit kept');
 });
 
 // ---------------- Final review fixes ----------------

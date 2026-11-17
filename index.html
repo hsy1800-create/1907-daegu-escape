@@ -76,15 +76,8 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 .codes th, .codes td { border: 2px solid var(--dark); padding: 8px 10px; text-align: center; }
 .codes th { background: var(--pale); }
 .codes .code { font-weight: 900; font-size: 24px; letter-spacing: 4px; color: var(--red); }
-.bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 4px; border: 3px solid var(--dark); border-radius: 14px; padding: 8px; background: #fff; box-shadow: 4px 4px 0 var(--dark); }
-.bar span { height: 46px; border-radius: 6px; border: 2px solid var(--dark); background: #EDEDED; }
-.bar span.on { background: var(--yel); }
 .won { text-align: center; font-weight: 900; font-size: 34px; margin: 14px 0 6px; }
-.coins { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 12px; }
-.coin { font: inherit; font-weight: 900; font-size: 18px; aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--dark); background: #fff; cursor: pointer; }
-.coin.on { background: var(--yel); }
 #celebrate { text-align: center; }
-@media (max-width: 520px) { .coins { grid-template-columns: repeat(5, 1fr); } .bar span { height: 30px; } }
 .gauge-sticky { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 8px 0; }
 .mini { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; }
 .mini .track { flex: 1; height: 18px; border: 3px solid var(--dark); border-radius: 999px; background: #fff; overflow: hidden; }
@@ -465,6 +458,16 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   }
   window.EscapeRender = render;
   window.addEventListener('hashchange', render);
+
+  // '새 수업 시작' on the teacher screen changes the session: every tablet from the last class starts over.
+  // A tablet that has never seen a session (first visit) just remembers it and keeps its progress.
+  E.sync.subscribe(t => {
+    const rs = (t && t.session) || 0, ls = S.get('session');
+    if (ls === null || ls === undefined) { S.set('session', rs); return; }
+    if (ls === rs) return;
+    S.set('session', rs); S.set('me', null); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0);
+    if (location.hash !== '#teacher' && location.hash !== '#library') go('#start');
+  });
   window.addEventListener('DOMContentLoaded', render);
   if (document.readyState !== 'loading') render();
 })();
@@ -500,16 +503,20 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   };
 })();
 
-/* ===================== teacher ===================== */
+/* ===================== teacher (live board, nothing to press during class) ===================== */
 (function () {
-  const E = window.Escape, S = E.store;
-  let unlocked = false;
-  window.addEventListener('hashchange', () => { if (location.hash !== '#teacher') unlocked = false; });
-  const fmt = won => won === 0 ? '0원' : (won % 10000 === 0 ? (won / 10000).toLocaleString('ko-KR') + '만 원' : won.toLocaleString('ko-KR') + '원');
+  const E = window.Escape, Y = E.sync;
+  let unlocked = false, off = null;
+  window.addEventListener('hashchange', () => {
+    if (location.hash !== '#teacher') { unlocked = false; if (off) { off(); off = null; } }
+  });
   const SEAT = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
+  const STATUS = { online: '실시간 연결됨', connecting: '연결하는 중', local: '이 기기만' };
+  const members = g => E.STUDENTS.filter(n => E.groupOf(n).group === g);
 
   window.EscapeRoutes['#teacher'] = function () {
     const app = document.getElementById('app');
+    if (off) { off(); off = null; }
     if (!unlocked) {
       app.innerHTML = '<div class="topbar"><a class="btn white small" href="#start">처음으로</a><span class="chip">선생님</span></div>' +
         '<div class="card center"><h1>선생님 화면</h1><p class="sub">비밀번호를 넣어요.</p>' +
@@ -525,38 +532,41 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     }
     let rows = '';
     for (let g = 1; g <= 4; g++) {
-      const mem = E.STUDENTS.filter(n => E.groupOf(n).group === g);
       rows += '<tr class="code-row"><td><b>' + g + '모둠</b></td><td class="code">' + E.groupCode(g) + '</td><td>' +
-        mem.map((n, i) => SEAT[i] + ' ' + n + '번(미션 ' + E.missionFor(n) + ')').join('<br>') + '</td></tr>';
+        members(g).map((n, i) => SEAT[i] + ' ' + n + '번(미션 ' + E.missionFor(n) + ')').join('<br>') + '</td></tr>';
     }
-    const answers = [1, 2, 3, 4, 5].map(i => '<li>미션 ' + i + ' ' + E.MISSIONS[i].title + ': <b>' + E.MISSIONS[i].digit + '</b></li>').join('');
+    const answers = [1, 2, 3, 4, 5].map(i => '<li>미션 ' + i + ' ' + E.MISSIONS[i].title + ': 비밀 숫자 <b>' + E.MISSIONS[i].digit + '</b>, 친구 퀴즈 답 <b>' + E.QUIZ[i].options[E.QUIZ[i].answer] + '</b></li>').join('');
     app.innerHTML = '<div class="topbar"><a class="btn white small" href="#start">처음으로</a><span class="chip red">선생님</span></div>' +
-      '<div class="card"><h2>1,300만 원 함께 채우기</h2><p class="sub">학생이 자기 약속을 발표하면 그 학생 번호를 눌러요. 한 명에 65만 원씩 채워져요.</p>' +
-      '<div class="bar" id="bar"></div><div class="won" id="gauge-won"></div>' +
-      '<div id="celebrate" hidden><div class="big-title"><span class="outline">1,300만 원 완성!</span></div><p style="font-weight:800">1907년 대구 사람들처럼 우리 반도 함께 힘을 모았어요.</p></div>' +
-      '<div class="coins" id="coins"></div></div>' +
+      '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">우리 반 모금함</h2><span class="status" id="t-net"></span></div>' +
+      '<p class="sub" style="margin-top:6px">학생들이 엽전 4개를 모아 직접 65만 원씩 넣어요. 선생님은 누를 것 없이 지켜보면 돼요. TV에 띄워 두세요.</p>' +
+      '<div class="cells" id="board">' + E.STUDENTS.map(n => '<div class="cell" data-no="' + n + '">' + n + '</div>').join('') + '</div>' +
+      '<div class="won" id="gauge-won"></div>' +
+      '<div id="celebrate" hidden><div class="big-title"><span class="outline">1,300만 원 완성!</span></div><p style="font-weight:800;text-align:center">1907년 대구 사람들처럼 우리 반도 함께 힘을 모았어요.</p></div></div>' +
+      '<div class="card"><h2>모둠별 진행</h2><div id="groups-board"></div></div>' +
       '<div class="card"><h2>모둠 금고 비밀번호</h2><table class="codes" id="codes"><tr><th>모둠</th><th>비밀번호</th><th>자리와 미션</th></tr>' + rows + '</table>' +
+      '<p class="sub" style="margin-top:10px">결석한 학생이 있으면 그 자리 숫자를 알려 주세요.</p>' +
       '<p class="sub" style="margin-top:10px">미션 정답</p><ul style="margin:4px 0 0">' + answers + '</ul></div>' +
-      '<div class="card"><h2>이 기기 기록 지우기</h2><p class="sub">다음 반이나 다음 시간에 같은 기기를 쓸 때 눌러요. 학생 진행과 게이지가 모두 지워져요.</p>' +
-      '<button class="btn white" id="reset">이 기기 기록 지우기</button></div>';
+      '<div class="card"><h2>새 수업 시작</h2><p class="sub">수업이 끝나면 눌러요. 반 모금함, 퀴즈, 증서, 호외가 모두 지워지고 학생 태블릿은 모두 처음 화면으로 돌아가요.</p>' +
+      '<button class="btn white" id="reset">새 수업 시작</button></div>';
 
-    function draw() {
-      const done = S.get('gauge') || [];
-      const won = E.gaugeWon(done.length);
-      document.getElementById('bar').innerHTML = E.STUDENTS.map((n, i) => '<span class="' + (i < done.length ? 'on' : '') + '"></span>').join('');
-      document.getElementById('gauge-won').textContent = fmt(won) + ' / 1,300만 원';
-      document.getElementById('celebrate').hidden = done.length < E.STUDENTS.length;
-      document.getElementById('coins').innerHTML = E.STUDENTS.map(n => '<button class="coin' + (done.includes(n) ? ' on' : '') + '" data-no="' + n + '">' + n + '</button>').join('');
-      document.querySelectorAll('.coin[data-no]').forEach(b => b.addEventListener('click', () => {
-        const no = Number(b.dataset.no), cur = S.get('gauge') || [];
-        S.set('gauge', cur.includes(no) ? cur.filter(x => x !== no) : cur.concat(no));
-        draw();
-      }));
+    function draw(t) {
+      t = t || {};
+      const donated = t.donated || {}, quiz = t.quiz || {};
+      const done = E.STUDENTS.filter(n => donated[n]).length;
+      document.querySelectorAll('#board .cell').forEach(c => c.classList.toggle('on', !!donated[c.dataset.no]));
+      document.getElementById('gauge-won').textContent = E.fmtWon(E.gaugeWon(done)) + ' / 1,300만 원';
+      document.getElementById('celebrate').hidden = done < E.STUDENTS.length;
+      const coins = n => { const s = quiz[n] || {}; return E.quizFor(n).filter(x => s[x.mission]).length; };
+      document.getElementById('groups-board').innerHTML = [1, 2, 3, 4].map(g =>
+        '<div style="margin:8px 0"><b>' + g + '모둠</b><div class="mates">' + members(g).map(n =>
+          '<div class="mate' + (donated[n] ? ' on' : '') + '">' + n + '번<br>' + (donated[n] ? '넣었어요' : '엽전 ' + coins(n) + '/' + E.COINS_NEEDED) + '</div>').join('') + '</div></div>').join('');
     }
-    draw();
+    const offData = Y.subscribe(draw);
+    const offStatus = Y.onStatus(s => { const n = document.getElementById('t-net'); if (n) { n.textContent = STATUS[s] || s; n.className = 'status ' + s; } });
+    off = () => { offData(); offStatus(); };
     document.getElementById('reset').addEventListener('click', () => {
-      if (!window.confirm('이 기기의 학생 진행과 게이지를 모두 지울까요?')) return;
-      S.clear(); unlocked = false; location.hash = '#start';
+      if (!window.confirm('반 모금함과 모둠 활동을 모두 지우고 새 수업을 시작할까요? 학생 태블릿도 모두 처음 화면으로 돌아가요.')) return;
+      Y.clear(Date.now()); unlocked = false; location.hash = '#start';
     });
   };
 })();
