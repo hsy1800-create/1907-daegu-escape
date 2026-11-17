@@ -204,6 +204,22 @@ test('friends text is shown as text, not as HTML', async () => {
   ok(!q('#news img') && !q('[data-show="slogan"] b'), 'no elements from friends text');
 });
 
+// ---------------- photos ----------------
+test('every mission clue card shows its photo with a credit', async () => {
+  const M = W().Escape.MISSIONS;
+  for (let i = 1; i <= 5; i++) ok(M[i].photo && M[i].photo.src && M[i].photo.alt && M[i].photo.credit, 'photo ' + i);
+  await pick(12);
+  const img = q('#clue-photo img'); ok(img && img.getAttribute('src') === M[3].photo.src, 'mission 3 photo');
+  ok(q('#clue-photo figcaption').textContent.includes(M[3].photo.credit), 'credit shown');
+  for (let i = 0; i < 20 && !(img.complete && img.naturalWidth); i++) await wait(100);
+  ok(img.naturalWidth > 0, 'image file loads');
+});
+test('the newspaper card shows the 1907 newspaper as a model', async () => {
+  await openVault12();
+  const img = q('#news-model img'); ok(img && img.getAttribute('src').includes('news-1907'), 'model photo');
+  ok(q('#news-model').textContent.includes('1907'), 'caption');
+});
+
 // ---------------- Task 4: videos and library ----------------
 test('mission video loads only after pressing the button', async () => {
   await pick(12);

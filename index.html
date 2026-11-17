@@ -115,6 +115,10 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 .part input { display: block; width: 100%; font: inherit; padding: 8px 10px; border: 2px solid var(--dark); border-radius: 8px; margin-top: 4px; background: #fff; }
 .part .val { font-weight: 700; min-height: 26px; }
 .blank { color: #aaa; }
+.photo { margin: 14px 0 0; }
+.photo img { display: block; width: 100%; max-height: 320px; object-fit: contain; background: #fff; border: 3px solid var(--dark); border-radius: 12px; }
+.photo figcaption { font-size: 15px; font-weight: 700; color: var(--gray); margin-top: 6px; }
+.photo figcaption small { display: block; font-weight: 500; font-size: 12px; margin-top: 2px; }
 @media (max-width: 520px) { .cells { grid-template-columns: repeat(5, 1fr); } .opts { grid-template-columns: 1fr; } }
 .video { margin-top: 14px; }
 .video-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit; font-weight: 800; border: 2px solid var(--dark); border-radius: 12px; background: #fff; padding: 10px 12px; cursor: pointer; }
@@ -148,6 +152,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       clue: '1906년 1월, 대구에 ‘광문사’가 세워졌어요. 광문사 사람들은 나라의 힘을 기르려면 교육이 필요하다고 보고, 학교 세우기에 힘썼어요.',
       key: '1906년',
       extra: '광문사는 책을 펴내던 출판사예요. 김광제가 사장, 서상돈이 부사장을 맡았어요.',
+      photo: { src: 'img/m1-gwangmunsa-sign.jpg', alt: '옛 광문사 터를 알리는 안내판', caption: '대구 중구에 있는 옛 광문사 터 안내판', credit: '사진: Qkqhrhkdtn, 위키미디어 공용, CC BY-SA 3.0, 일부 자름' },
       video: { id: 'Z6Erzwj3F04', title: '[근현대 대구 이야기] 4. 국채 보상 운동의 과거, 현재가 우리에게 주는 의미', channel: '대구미래교육연구원', length: '4분 45초' }
     },
     2: {
@@ -156,6 +161,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       clue: '1907년 1월 29일, 대구 광문사 모임에서 김광제와 서상돈이 나랏빚 1,300만 원을 국민의 힘으로 갚자고 제안했어요.',
       key: '1907년',
       extra: '일본이 억지로 빌려준 돈(차관)이 쌓여, 나라가 갚아야 할 빚이 1,300만 원이나 되었어요.',
+      photo: { src: 'img/m2-gwangmunsa-site.jpg', alt: '옛 광문사 터 안내판 전체', caption: '옛 광문사 터 안내판. 무엇이라고 적혀 있나요?', credit: '사진: Qkqhrhkdtn, 위키미디어 공용, CC BY-SA 3.0, 일부 자름' },
       video: { id: 'vier53PNHRk', title: '국사이야기, 국채보상운동', channel: 'EBS 교양', length: '1분 52초' }
     },
     3: {
@@ -164,6 +170,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       clue: '서상돈은 이렇게 제안했어요. “2천만 국민이 석 달 동안 담배를 끊고, 한 사람이 한 달에 20전씩 모으면 1,300만 원 가까이 모을 수 있어요.”',
       key: '석 달',
       extra: '담배를 끊는 것을 ‘단연’이라고 해요. 이때 많은 사람이 나랏빚을 갚으려고 단연했어요.',
+      photo: { src: 'img/m3-seo-sangdon.jpg', alt: '서상돈의 얼굴 사진', caption: '서상돈 (1850~1913)', credit: '사진: 위키미디어 공용, CC0' },
       video: { id: 'egeQ1xiwZ7Q', title: '1,300만원에 나라를 뺏겨? 못뺏겨~어딜뺏겨!!', channel: '대구TV (대구광역시 공식)', length: '6분 25초' }
     },
     4: {
@@ -172,6 +179,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       clue: '대구 남일동에 사는 부인 일곱 명이 ‘패물폐지부인회’를 만들었어요. 은반지와 은비녀를 빼서 나랏빚 갚는 데 보태자는 뜻이었지요.',
       key: '일곱 명',
       extra: '여성들이 모임을 만들어 국채보상운동에 참여한 첫 사례로 꼽혀요.',
+      photo: { src: 'img/m4-roster.jpg', alt: '의연금을 낸 사람들의 이름을 적은 두루마리 명부', caption: '국채보상운동 의연금 명부. 의연금을 낸 사람들의 이름을 적었어요.', credit: '사진: 고려, 위키미디어 공용, CC BY 4.0, 일부 자름' },
       video: { id: '0tZ8yMaFJ1o', title: '나라의 빚을 갚아 주권을 지키자, 국채보상운동', channel: 'kculturechannel', length: '5분 5초' }
     },
     5: {
@@ -180,9 +188,11 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       clue: '1907년 2월 21일, 대구 사람들이 북후정에 모여 군민대회를 열고 의연금을 모으기 시작했어요. 오늘날 대구는 이날을 ‘대구시민의 날’로 기념해요.',
       key: '2월 21일',
       extra: '대구시는 2월 21일부터 2월 28일까지를 대구시민주간으로 정해 국채보상운동과 2.28 민주운동을 함께 기려요.',
+      photo: { src: 'img/m5-park.jpg', alt: '저녁 무렵 국채보상운동기념공원과 둘레 거리', caption: '오늘날 대구 국채보상운동기념공원', credit: '사진: 대구광역시, 공공누리 제1유형' },
       video: null
     }
   };
+  const NEWS_PHOTO = { src: 'img/news-1907.jpg', alt: '1907년 5월 18일 자 영문 신문 1면 윗부분', caption: '1907년 신문은 이렇게 생겼어요. 1907년 5월 18일 자 대한매일신보 영문판(The Korea Daily News) 1면', credit: '자료: 퍼블릭 도메인, 위키미디어 공용, 윗부분만 자름' };
 
   // friend mission quiz: the answer is only on that mission's clue card
   const QUIZ = {
@@ -266,7 +276,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   try { ls = window.localStorage; } catch (e) { ls = null; }
 
   window.Escape = {
-    TEACHER_PIN, STUDENTS, MISSIONS, WON_PER_STUDENT, QUIZ, COINS_NEEDED, QUIZ_WAIT, SEAT_FIELDS,
+    TEACHER_PIN, STUDENTS, MISSIONS, NEWS_PHOTO, WON_PER_STUDENT, QUIZ, COINS_NEEDED, QUIZ_WAIT, SEAT_FIELDS,
     groupOf, missionFor, quizFor, groupCode, checkAnswer, checkGroupCode, gaugeWon, fmtWon, makeStore,
     store: makeStore(ls)
   };
@@ -394,6 +404,8 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
       '<p class="sub">단서를 읽고 질문의 빈칸을 채우면 나만의 비밀 숫자가 나와요.</p>' +
       '<div class="card"><span class="chip yel">미션 ' + mn + '</span><h2 id="m-title" style="margin-top:8px">' + esc(m.title) + '</h2>' +
       '<div class="clue" id="clue">' + clueHtml + ICON.magnifier + '</div>' +
+      (m.photo ? '<figure class="photo" id="clue-photo"><img src="' + esc(m.photo.src) + '" alt="' + esc(m.photo.alt) + '"><figcaption>' +
+        esc(m.photo.caption) + '<small>' + esc(m.photo.credit) + '</small></figcaption></figure>' : '') +
       '<div style="margin-top:12px"><button class="btn white small" id="extra-btn">추가 단서 보기</button></div>' +
       '<div class="extra" id="extra" hidden>' + esc(m.extra) + '</div>' +
       '<div id="video-slot"></div></div>';
@@ -686,6 +698,8 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 
       '<div class="card"><h2><span class="step">4</span>모둠 호외</h2>' +
       '<p class="sub">1907년 대한매일신보는 의연금을 낸 사람들의 이름을 신문에 실어 운동을 널리 알렸어요. 우리 모둠도 호외로 알려요.</p>' +
+      '<figure class="photo no-print" id="news-model"><img src="' + esc(E.NEWS_PHOTO.src) + '" alt="' + esc(E.NEWS_PHOTO.alt) + '"><figcaption>' +
+        esc(E.NEWS_PHOTO.caption) + '<small>' + esc(E.NEWS_PHOTO.credit) + '</small></figcaption></figure>' +
       partsHtml(['place', 'fact1', 'fact2', 'fact3', 'slogan']) +
       '<div class="parts no-print"><label class="part mine"><span class="lab">내 약속 한 가지 (의연자 명단에 실려요)</span><input id="my-promise" maxlength="60" autocomplete="off" placeholder="예) 쉬는 시간에 책 읽기"></label></div>' +
       '<div id="news-out"></div></div>' +

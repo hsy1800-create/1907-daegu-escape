@@ -47,3 +47,12 @@
 | 4 남일동 부인들 | 나라의 빚을 갚아 주권을 지키자, 국채보상운동 | kculturechannel |
 
 영상의 저작권은 각 채널에 있으며, 이 앱은 유튜브 퍼가기 기능으로만 보여 줍니다.
+
+## 사진 출처 (`img/` 폴더, 각 파일은 원래 라이선스를 따릅니다)
+| 파일 | 내용 | 출처와 라이선스 | 바꾼 점 |
+|---|---|---|---|
+| m1-gwangmunsa-sign.jpg, m2-gwangmunsa-site.jpg | 옛 광문사 터 안내판 | Qkqhrhkdtn, [위키미디어 공용](https://commons.wikimedia.org/wiki/File:The_Site_board_of_DaeguGuangmunsa_in_Daegu.jpg), CC BY-SA 3.0 | 잘라 내고 줄임 (CC BY-SA 3.0으로 나눔) |
+| m3-seo-sangdon.jpg | 서상돈 | [위키미디어 공용](https://commons.wikimedia.org/wiki/File:서상돈(Seo_Sang-don,_徐相敦).jpg), CC0 | 없음 |
+| m4-roster.jpg | 국채보상운동 의연금 명부 | 고려, [위키미디어 공용](https://commons.wikimedia.org/wiki/File:Archives_of_the_National_Debt_Redemption_Movement,_Proclamation_of_Korean_Independence.jpg), CC BY 4.0 | 명부 부분만 잘라 내고 줄임 |
+| m5-park.jpg | 국채보상운동기념공원 | 대구광역시, [위키미디어 공용](https://commons.wikimedia.org/wiki/File:National_Debt_Redemption_Movement_Memorial_Park,_2019_01.jpg), 공공누리 제1유형 | 줄임 |
+| news-1907.jpg | 1907년 5월 18일 자 대한매일신보 영문판 1면 | [위키미디어 공용](https://commons.wikimedia.org/wiki/File:The_Korea_Daily_News_(May_18,_1907_page_1).jpg), 퍼블릭 도메인 | 윗부분만 잘라 내고 줄임 |
