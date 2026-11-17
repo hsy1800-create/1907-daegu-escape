@@ -130,6 +130,9 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 </head>
 <body>
 <div id="app"></div>
+<!-- Firebase for the shared class donation box; if these fail to load, the app runs on this device only -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
 /* ===================== data and rules ===================== */
@@ -274,7 +277,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 /* ===================== shared class data (Firebase or this device only) ===================== */
 (function () {
   const E = window.Escape;
-  const FIREBASE_URL = '';   // Realtime Database address; empty means this device only
+  const FIREBASE_URL = 'https://daegu-1907-escape-default-rtdb.asia-southeast1.firebasedatabase.app';   // empty means this device only
   const ROOM = 'class';
 
   function setIn(tree, path, v) {
@@ -309,12 +312,33 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     };
   }
 
+  // Firebase Realtime Database through the compat SDK; only the database address is needed
+  function makeFirebaseBackend(fb, url, room) {
+    const app = fb.apps && fb.apps.length ? fb.apps[0] : fb.initializeApp({ databaseURL: url });
+    const db = app.database();
+    const ref = db.ref('rooms/' + room);
+    let tree = {}, loaded = false, status = 'connecting';
+    const fns = new Set(), sfns = new Set();
+    ref.on('value', snap => { tree = snap.val() || {}; loaded = true; fns.forEach(f => f(tree)); });
+    db.ref('.info/connected').on('value', snap => { status = snap.val() ? 'online' : 'connecting'; sfns.forEach(f => f(status)); });
+    return {
+      kind: 'firebase',
+      tree: () => tree,
+      subscribe(fn) { fns.add(fn); if (loaded) fn(tree); return () => fns.delete(fn); },
+      set(path, v) { ref.child(path).set(v === undefined ? null : v); },
+      clear(session) { ref.set({ session }); },
+      status: () => status,
+      onStatus(fn) { sfns.add(fn); fn(status); return () => sfns.delete(fn); }
+    };
+  }
+
   let backend = null;
   const wantLocal = /[?&]local(=|&|$)/.test(location.search);
-  if (!wantLocal && FIREBASE_URL && window.firebase && window.Escape.makeFirebaseBackend) {
-    try { backend = window.Escape.makeFirebaseBackend(window.firebase, FIREBASE_URL, ROOM); } catch (e) { backend = null; }
+  if (!wantLocal && FIREBASE_URL && window.firebase) {
+    try { backend = makeFirebaseBackend(window.firebase, FIREBASE_URL, ROOM); } catch (e) { backend = null; }
   }
   E.makeLocalBackend = makeLocalBackend;
+  E.makeFirebaseBackend = makeFirebaseBackend;
   E.setIn = setIn;
   E.sync = backend || makeLocalBackend(E.store);
 })();
@@ -464,9 +488,9 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   E.sync.subscribe(t => {
     const rs = (t && t.session) || 0, ls = S.get('session');
     if (ls === null || ls === undefined) { S.set('session', rs); return; }
-    if (ls === rs) return;
-    S.set('session', rs); S.set('me', null); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0);
-    if (location.hash !== '#teacher' && location.hash !== '#library') go('#start');
+    if (ls !== rs) { S.set('session', rs); S.set('me', null); S.set('solved', false); S.set('wrong', 0); S.set('vault', false); S.set('vaultWrong', 0); }
+    // also covers a student tab next to the teacher tab on one computer (they share storage)
+    if (!me() && /^#(mission|vault|group)$/.test(location.hash)) go('#start');
   });
   window.addEventListener('DOMContentLoaded', render);
   if (document.readyState !== 'loading') render();

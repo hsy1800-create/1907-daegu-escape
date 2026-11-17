@@ -78,6 +78,22 @@ test('sync stores, removes and clears shared data in local mode', () => {
   s.clear(5); eq(s.tree(), { session: 5 }); un(); eq(s.status(), 'local');
 });
 
+test('firebase backend maps subscribe, set and clear onto the class room', () => {
+  const calls = []; let valueCb = null, connCb = null;
+  const ref = path => ({
+    on(ev, cb) { if (path === 'rooms/class') valueCb = cb; if (path === '.info/connected') connCb = cb; },
+    child(p) { return { set(v) { calls.push(['set', path + '/' + p, v]); } }; },
+    set(v) { calls.push(['set', path, v]); }
+  });
+  const fb = { apps: [], initializeApp(cfg) { calls.push(['init', cfg.databaseURL]); return { database: () => ({ ref }) }; } };
+  const b = W().Escape.makeFirebaseBackend(fb, 'https://x.firebasedatabase.app', 'class');
+  let got = null; b.subscribe(t => { got = t; }); eq(got, null, 'nothing before the data arrives');
+  valueCb({ val: () => ({ donated: { 3: true } }) }); eq(got, { donated: { 3: true } }); eq(b.tree().donated[3], true);
+  b.set('donated/7', true); b.set('groups/1/f/cut', null); b.clear(9);
+  eq(calls, [['init', 'https://x.firebasedatabase.app'], ['set', 'rooms/class/donated/7', true], ['set', 'rooms/class/groups/1/f/cut', null], ['set', 'rooms/class', { session: 9 }]]);
+  eq(b.status(), 'connecting'); connCb({ val: () => true }); eq(b.status(), 'online');
+});
+
 // ---------------- Task 2: student flow ----------------
 function setVal(sel, v) { const el = q(sel); el.value = v; const Ev = W().Event; el.dispatchEvent(new Ev('input', { bubbles: true })); }
 async function click(sel) { q(sel).click(); await wait(150); }
@@ -231,6 +247,13 @@ test('a new class session sends a student tablet back to the start', async () =>
   await pick(12); setVal('#answer', '3'); await click('#check'); ok(q('#digit'), 'solved');
   SY().clear(Date.now()); await wait(150);
   eq(W().location.hash, '#start'); eq(W().Escape.store.get('me'), null);
+});
+test('a student tab sharing storage with the teacher tab also goes back to the start', async () => {
+  await pick(12); setVal('#answer', '3'); await click('#check');
+  // the teacher tab on the same computer already wrote the new session and cleared 'me'
+  W().Escape.store.set('session', 777); W().Escape.store.set('me', null);
+  SY().clear(777); await wait(150);
+  eq(W().location.hash, '#start');
 });
 test('a tablet seeing the class data for the first time keeps its progress', async () => {
   await fresh();
