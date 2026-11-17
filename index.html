@@ -85,6 +85,44 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
 .coin.on { background: var(--yel); }
 #celebrate { text-align: center; }
 @media (max-width: 520px) { .coins { grid-template-columns: repeat(5, 1fr); } .bar span { height: 30px; } }
+.gauge-sticky { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 8px 0; }
+.mini { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; }
+.mini .track { flex: 1; height: 18px; border: 3px solid var(--dark); border-radius: 999px; background: #fff; overflow: hidden; }
+.mini .fill { height: 100%; width: 0; background: var(--yel); transition: width .5s; }
+.status { font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 999px; border: 2px solid var(--dark); background: #fff; white-space: nowrap; }
+.status.online { background: #CDEFC6; }
+.status.connecting { background: #FFE1C4; }
+.quiz-card { border: 2px solid var(--dark); border-radius: 14px; padding: 12px 14px; margin: 12px 0; background: #fff; }
+.quiz-card.done { background: var(--pale); }
+.quiz-card .who { font-weight: 900; font-size: 15px; color: var(--brown); }
+.quiz-card .qq { font-weight: 800; margin: 4px 0 10px; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt { font: inherit; font-weight: 800; border: 2px solid var(--dark); border-radius: 10px; padding: 10px 8px; background: #fff; color: var(--dark); cursor: pointer; }
+.opt:disabled { cursor: default; opacity: .55; }
+.opt.right, .opt.right:disabled { background: var(--yel); opacity: 1; }
+.quiz-msg { min-height: 24px; font-weight: 800; color: var(--red); margin-top: 8px; font-size: 16px; }
+.quiz-card.done .quiz-msg { color: var(--dark); }
+.yeop { display: inline-flex; gap: 6px; }
+.yeop span { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--dark); background: #EDEDED; }
+.yeop span::after { content: ''; position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -6px 0 0 -6px; border: 2px solid var(--dark); background: var(--bg); }
+.yeop span.on { background: var(--yel); }
+.cells { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 10px; }
+.cell { aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--dark); background: #EDEDED; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; transition: background .3s; }
+.cell.on { background: var(--yel); }
+.cell.mine { outline: 3px dashed var(--red); outline-offset: 2px; }
+.mates { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; font-size: 14px; text-align: center; font-weight: 800; }
+.mate { border: 2px solid var(--dark); border-radius: 10px; padding: 6px 2px; background: #fff; }
+.mate.on { background: var(--yel); }
+.mate.me { outline: 3px dashed var(--red); outline-offset: 1px; }
+.parts { display: grid; gap: 8px; margin: 10px 0 4px; }
+.part { display: block; border: 2px solid var(--dark); border-radius: 10px; padding: 8px 12px; background: #fff; }
+.part.mine { background: var(--pale); border-width: 3px; }
+.part .lab { display: block; font-size: 14px; font-weight: 800; color: var(--gray); }
+.part.mine .lab { color: var(--dark); }
+.part input { display: block; width: 100%; font: inherit; padding: 8px 10px; border: 2px solid var(--dark); border-radius: 8px; margin-top: 4px; background: #fff; }
+.part .val { font-weight: 700; min-height: 26px; }
+.blank { color: #aaa; }
+@media (max-width: 520px) { .cells { grid-template-columns: repeat(5, 1fr); } .opts { grid-template-columns: 1fr; } }
 .video { margin-top: 14px; }
 .video-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit; font-weight: 800; border: 2px solid var(--dark); border-radius: 12px; background: #fff; padding: 10px 12px; cursor: pointer; }
 .video-btn .play { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -159,6 +197,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     5: { q: '1907년 2월 21일, 대구 사람들이 모여 군민대회를 연 곳은?', options: ['북후정', '경복궁', '탑골공원', '독립문'], answer: 0 }
   };
   const COINS_NEEDED = 4;
+  const QUIZ_WAIT = 8;   // seconds a question stays locked after a wrong pick
   // which certificate and newspaper parts each seat writes on their own tablet
   const SEAT_FIELDS = { 1: ['cut', 'fact1'], 2: ['save', 'fact2'], 3: ['from', 'to', 'fact3'], 4: ['place', 'think'], 5: ['slogan'] };
 
@@ -200,6 +239,7 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
     return normalize(input) === groupCode(group);
   }
   function gaugeWon(doneCount) { return doneCount * WON_PER_STUDENT; }
+  function fmtWon(won) { return won === 0 ? '0원' : (won % 10000 === 0 ? (won / 10000).toLocaleString('ko-KR') + '만 원' : won.toLocaleString('ko-KR') + '원'); }
 
   function makeStore(backend) {
     let mem = {};
@@ -230,8 +270,8 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   try { ls = window.localStorage; } catch (e) { ls = null; }
 
   window.Escape = {
-    TEACHER_PIN, STUDENTS, MISSIONS, WON_PER_STUDENT, QUIZ, COINS_NEEDED, SEAT_FIELDS,
-    groupOf, missionFor, quizFor, groupCode, checkAnswer, checkGroupCode, gaugeWon, makeStore,
+    TEACHER_PIN, STUDENTS, MISSIONS, WON_PER_STUDENT, QUIZ, COINS_NEEDED, QUIZ_WAIT, SEAT_FIELDS,
+    groupOf, missionFor, quizFor, groupCode, checkAnswer, checkGroupCode, gaugeWon, fmtWon, makeStore,
     store: makeStore(ls)
   };
 })();
@@ -521,100 +561,191 @@ mark { background: var(--yel); padding: 0 3px; border-radius: 4px; font-weight: 
   };
 })();
 
-/* ===================== group activities ===================== */
+/* ===================== group activities (each student on their own tablet) ===================== */
 (function () {
-  const E = window.Escape, S = E.store;
+  const E = window.Escape, S = E.store, Y = E.sync;
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const SEAT = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
   const members = g => E.STUDENTS.filter(n => E.groupOf(n).group === g);
-  const blank = v => (v && String(v).trim()) ? esc(v) : '<span style="color:#aaa">(        )</span>';
+  const blank = v => (v && String(v).trim()) ? esc(v) : '<span class="blank">(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>';
+  const LABEL = {
+    cut: '우리 모둠이 줄일 것', save: '우리 모둠이 모을 것', from: '약속 시작 날', to: '약속 끝 날',
+    fact1: '알게 된 사실 1', fact2: '알게 된 사실 2', fact3: '알게 된 사실 3',
+    place: '머리기사 장소 (○○에서 시작된 국채보상운동!)', think: '우리 모둠 생각 한 문장', slogan: '홍보 문구 (‘함께’를 넣어 한 줄로)'
+  };
+  const HINT = { cut: '예) 쉬는 시간 스마트폰', save: '예) 군것질 한 번 참은 돈', from: '예) 11월 20일', to: '예) 12월 20일', place: '예) 대구', fact1: '미션에서 알게 된 것', fact2: '미션에서 알게 된 것', fact3: '미션에서 알게 된 것', think: '모둠이 이야기한 까닭', slogan: '예) 함께 모으면 나라를 지켜요' };
+  const STATUS = { online: '실시간 연결됨', connecting: '연결하는 중', local: '이 기기만' };
+  let unsub = null;
+  window.addEventListener('hashchange', () => { if (location.hash !== '#group' && unsub) { unsub(); unsub = null; } });
 
-  function certHtml(group, c) {
-    const weeks = c.weeks || [false, false, false, false];
+  function ownerSeat(field) { for (let s = 1; s <= 5; s++) if (E.SEAT_FIELDS[s].includes(field)) return s; return 0; }
+
+  function certHtml(group, f, weeks) {
+    const on = i => !!(weeks && weeks[i]);
     return '<div class="cert" id="cert"><h3>국채보상 모둠 의연 증서</h3>' +
       '<p><b>약속한 모둠</b> ' + group + '모둠 (' + members(group).map(n => n + '번').join(', ') + ')</p>' +
-      '<p><b>우리 모둠이 줄일 것</b> ' + blank(c.cut) + '</p>' +
-      '<p><b>우리 모둠이 모을 것</b> ' + blank(c.save) + '</p>' +
-      '<p><b>약속 기간</b> ' + blank(c.from) + '부터 ' + blank(c.to) + '까지</p>' +
+      '<p><b>우리 모둠이 줄일 것</b> ' + blank(f.cut) + '</p>' +
+      '<p><b>우리 모둠이 모을 것</b> ' + blank(f.save) + '</p>' +
+      '<p><b>약속 기간</b> ' + blank(f.from) + '부터 ' + blank(f.to) + '까지</p>' +
       '<p style="margin-top:16px;padding-right:90px">위 모둠은 국채보상운동의 뜻을 이어 위와 같이 약속하였기에 이 증서를 드립니다.</p>' +
       '<div class="seal">칭찬<br>도장</div></div>' +
-      '<div class="no-print"><b>한 달 실천 체크</b> <span class="sub">약속을 지킨 주를 눌러요</span><div class="weeks">' +
-      weeks.map((on, i) => '<button class="week' + (on ? ' on' : '') + '" data-week="' + i + '">' + (i + 1) + '주' + (on ? ' ✔' : '') + '</button>').join('') + '</div></div>';
+      '<div class="no-print"><b>한 달 실천 체크</b> <span class="sub">약속을 지킨 주를 눌러요 (모둠 모두에게 보여요)</span><div class="weeks">' +
+      [0, 1, 2, 3].map(i => '<button class="week' + (on(i) ? ' on' : '') + '" data-week="' + i + '">' + (i + 1) + '주' + (on(i) ? ' ✔' : '') + '</button>').join('') + '</div></div>';
   }
-  function newsHtml(group, n) {
+  function newsHtml(group, f, p) {
     const d = new Date();
-    const facts = (n.facts || []).filter(f => f && f.trim());
-    const pro = members(group).map(no => '<li>' + no + '번 ' + blank((n.promises || {})[no]) + '</li>').join('');
+    const facts = [f.fact1, f.fact2, f.fact3].filter(x => x && String(x).trim());
+    const pro = members(group).map(no => '<li>' + no + '번 ' + blank(p[no]) + '</li>').join('');
     return '<div class="news" id="news"><div class="mast">대구 ' + group + '모둠 호외</div>' +
       '<div class="date">' + d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 | 1907년 국채보상운동을 우리 모둠이 다시 알립니다</div>' +
-      '<div class="head">' + blank(n.place) + '에서 시작된 국채보상운동!</div>' +
+      '<div class="head">' + blank(f.place) + '에서 시작된 국채보상운동!</div>' +
       '<div class="cols"><div class="box"><b>알게 된 사실</b><ol style="margin:6px 0 0;padding-left:20px">' +
-      (facts.length ? facts.map(f => '<li>' + esc(f) + '</li>').join('') : '<li style="color:#aaa">(아직 없음)</li>') + '</ol></div>' +
+      (facts.length ? facts.map(x => '<li>' + esc(x) + '</li>').join('') : '<li class="blank">(아직 없음)</li>') + '</ol></div>' +
       '<div class="box"><b>의연자 명단</b><ul style="margin:6px 0 0;padding-left:18px">' + pro + '</ul></div></div>' +
-      '<div class="slogan">' + blank(n.slogan) + '</div></div>';
+      '<div class="box" style="margin-top:12px"><b>우리 모둠 생각</b><div>' + blank(f.think) + '</div></div>' +
+      '<div class="slogan">' + blank(f.slogan) + '</div></div>';
   }
 
   window.EscapeGroup = function (box, group) {
-    const CK = 'cert' + group, NK = 'news' + group;
-    const cert = S.get(CK) || {}, news = S.get(NK) || {};
-    const mem = members(group);
+    if (unsub) { unsub(); unsub = null; }
+    const me = Number(S.get('me'));
+    const mem = members(group), seat = E.groupOf(me).seat, mine = E.SEAT_FIELDS[seat];
+    const quiz = E.quizFor(me);
+    const cooldown = {};
+    const base = 'groups/' + group;
+
+    function partsHtml(fields) {
+      return '<div class="parts no-print">' + fields.map(k => {
+        if (mine.includes(k)) {
+          return '<label class="part mine"><span class="lab">내가 쓸 칸: ' + esc(LABEL[k]) + '</span><input id="f-' + k + '" data-field="' + k + '" maxlength="80" autocomplete="off" placeholder="' + esc(HINT[k] || '') + '"></label>';
+        }
+        const s = ownerSeat(k);
+        return '<div class="part"><span class="lab">' + SEAT[s - 1] + ' ' + mem[s - 1] + '번이 쓰는 칸: ' + esc(LABEL[k]) + '</span><div class="val" data-show="' + k + '"></div></div>';
+      }).join('') + '</div>';
+    }
+
     box.innerHTML =
-      '<div class="card" id="think"><h2><span class="step">1</span>생각 나누기</h2>' +
+      '<div class="gauge-sticky no-print"><div class="mini"><span>반 모금함</span><div class="track"><div class="fill" id="mini-fill"></div></div><span id="mini-won"></span><span class="status" id="net"></span></div></div>' +
+
+      '<div class="card" id="quiz"><h2><span class="step">1</span>의연금 모으기</h2>' +
+      '<p class="sub">모둠 친구 4명의 미션 문제를 풀어 엽전 4개를 모아요. 답은 그 미션을 푼 친구가 알아요. 친구에게 물어봐요!</p>' +
+      '<div class="row" style="margin:12px 0 4px"><b>내 엽전</b><span class="yeop" id="yeop"></span><b id="coin-count"></b></div>' +
+      quiz.map(x => '<div class="quiz-card" data-mission="' + x.mission + '"><div class="who">' + x.friend + '번 친구의 미션: ' + esc(x.title) + '</div>' +
+        '<div class="qq">' + esc(x.q) + '</div><div class="opts">' +
+        x.options.map((o, i) => '<button class="opt" type="button" data-opt="' + i + '">' + esc(o) + '</button>').join('') +
+        '</div><div class="quiz-msg"></div></div>').join('') +
+      '<div id="donate-box" class="center" style="margin-top:14px"><button class="btn dark" id="donate" type="button" disabled>65만 원 모금함에 넣기</button><p class="sub" id="donate-msg" style="margin-top:8px"></p></div>' +
+      '<p class="sub" style="margin-top:12px">우리 모둠 친구들</p><div class="mates" id="mates"></div></div>' +
+
+      '<div class="card" id="class-gauge"><h2>우리 반 모금함</h2><p class="sub">한 사람이 65만 원씩, 20명이 모두 넣으면 1,300만 원이에요.</p>' +
+      '<div class="cells" id="cells">' + E.STUDENTS.map(n => '<div class="cell' + (n === me ? ' mine' : '') + '" data-no="' + n + '">' + n + '</div>').join('') + '</div>' +
+      '<div class="won" id="gauge-won"></div>' +
+      '<div id="celebrate" hidden><div class="big-title"><span class="outline">1,300만 원 완성!</span></div><p style="font-weight:800;text-align:center">1907년 대구 사람들처럼 우리 반도 함께 힘을 모았어요.</p></div></div>' +
+
+      '<div class="card" id="think"><h2><span class="step">2</span>생각 나누기</h2>' +
       '<p style="font-size:20px;font-weight:800">신분도 나이도 다른 사람들이 한마음으로 참여할 수 있었던 까닭은 무엇일까요?</p>' +
-      '<p class="sub">모둠원끼리 이야기한 뒤, 모둠의 생각을 한 문장으로 말해요.</p></div>' +
+      '<p class="sub">모둠원끼리 이야기한 뒤, 넷째 ' + mem[3] + '번이 모둠 생각을 한 문장으로 써요.</p>' + partsHtml(['think']) + '</div>' +
 
-      '<div class="card"><h2><span class="step">2</span>모둠 의연 증서</h2>' +
-      '<p class="sub">1907년 사람들이 담배를 끊고 돈을 모았듯이(단연), 우리 모둠이 줄일 것과 모을 것을 정해요.</p>' +
-      '<div id="cert-form" class="no-print">' +
-      '<label class="field">우리 모둠이 줄일 것<input id="cut" placeholder="예) 쉬는 시간 스마트폰"></label>' +
-      '<label class="field">우리 모둠이 모을 것<input id="save" placeholder="예) 군것질 한 번 참은 돈"></label>' +
-      '<div class="field">약속 기간 <input class="inline-input" id="from" placeholder="11월 20일"> 부터 <input class="inline-input" id="to" placeholder="12월 20일"> 까지</div>' +
-      '<button class="btn" id="cert-make">증서 완성하기</button></div><div id="cert-out"></div></div>' +
+      '<div class="card"><h2><span class="step">3</span>모둠 의연 증서</h2>' +
+      '<p class="sub">1907년 사람들이 담배를 끊고 돈을 모았듯이(단연), 우리 모둠이 줄일 것과 모을 것을 정해요. 노란 칸이 내가 쓸 칸이에요.</p>' +
+      partsHtml(['cut', 'save', 'from', 'to']) + '<div id="cert-out"></div></div>' +
 
-      '<div class="card"><h2><span class="step">3</span>모둠 호외</h2>' +
+      '<div class="card"><h2><span class="step">4</span>모둠 호외</h2>' +
       '<p class="sub">1907년 대한매일신보는 의연금을 낸 사람들의 이름을 신문에 실어 운동을 널리 알렸어요. 우리 모둠도 호외로 알려요.</p>' +
-      '<div id="news-form" class="no-print">' +
-      '<div class="field">머리기사 <input class="inline-input" id="news-place" placeholder="어디"> 에서 시작된 국채보상운동!</div>' +
-      '<label class="field">알게 된 사실 1<input id="fact1"></label>' +
-      '<label class="field">알게 된 사실 2<input id="fact2"></label>' +
-      '<label class="field">알게 된 사실 3<input id="fact3"></label>' +
-      '<div class="field">의연자 명단 (모둠원 각자 약속 한 가지)<div class="promises" style="margin-top:6px">' +
-      mem.map(no => '<span>' + no + '번</span><input data-promise="' + no + '">').join('') + '</div></div>' +
-      '<label class="field">홍보 문구 (‘함께’라는 낱말을 넣어 한 줄로)<input id="slogan"></label>' +
-      '<button class="btn" id="news-make">호외 완성하기</button></div><div id="news-out"></div></div>' +
+      partsHtml(['place', 'fact1', 'fact2', 'fact3', 'slogan']) +
+      '<div class="parts no-print"><label class="part mine"><span class="lab">내 약속 한 가지 (의연자 명단에 실려요)</span><input id="my-promise" maxlength="60" autocomplete="off" placeholder="예) 쉬는 시간에 책 읽기"></label></div>' +
+      '<div id="news-out"></div></div>' +
 
-      '<div class="row no-print" style="justify-content:space-between"><a class="btn white small" href="#library">영상 자료실</a><button class="btn white small" id="print">인쇄하기</button></div>';
+      '<div class="row no-print" style="justify-content:space-between"><a class="btn white small" href="#library">영상 자료실</a><button class="btn white small" id="print" type="button">인쇄하기</button></div>';
 
     const $ = id => box.querySelector('#' + id);
-    // restore inputs
-    ['cut', 'save', 'from', 'to'].forEach(k => { $(k).value = cert[k] || ''; });
-    $('news-place').value = news.place || '';
-    [0, 1, 2].forEach(i => { $('fact' + (i + 1)).value = (news.facts || [])[i] || ''; });
-    $('slogan').value = news.slogan || '';
-    box.querySelectorAll('input[data-promise]').forEach(inp => { inp.value = (news.promises || {})[inp.dataset.promise] || ''; });
+    const mineInputs = [...box.querySelectorAll('input[data-field]')];
+    const promise = $('my-promise');
 
-    function readCert() { const c = S.get(CK) || {}; ['cut', 'save', 'from', 'to'].forEach(k => { c[k] = $(k).value; }); return c; }
-    function readNews() {
-      const n = S.get(NK) || {};
-      n.place = $('news-place').value; n.facts = [1, 2, 3].map(i => $('fact' + i).value); n.slogan = $('slogan').value;
-      n.promises = {}; box.querySelectorAll('input[data-promise]').forEach(inp => { n.promises[inp.dataset.promise] = inp.value; });
-      return n;
-    }
-    function showCert() {
-      const c = S.get(CK) || {};
-      $('cert-out').innerHTML = c.made ? certHtml(group, c) : '';
-      $('cert-out').querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => {
-        const cc = S.get(CK) || {}; cc.weeks = cc.weeks || [false, false, false, false];
-        cc.weeks[b.dataset.week] = !cc.weeks[b.dataset.week]; S.set(CK, cc); showCert();
-      }));
-    }
-    function showNews() { const n = S.get(NK) || {}; $('news-out').innerHTML = n.made ? newsHtml(group, n) : ''; }
+    function solvedOf(t, no) { return ((t.quiz || {})[no]) || {}; }
+    function coinsOf(t, no) { const s = solvedOf(t, no); return E.quizFor(no).filter(x => s[x.mission]).length; }
 
-    $('cert-form').addEventListener('input', () => { const c = readCert(); S.set(CK, c); if (c.made) showCert(); });
-    $('news-form').addEventListener('input', () => { const n = readNews(); S.set(NK, n); if (n.made) showNews(); });
-    $('cert-make').addEventListener('click', () => { const c = readCert(); c.made = true; S.set(CK, c); showCert(); });
-    $('news-make').addEventListener('click', () => { const n = readNews(); n.made = true; S.set(NK, n); showNews(); });
+    function refresh(t) {
+      t = t || {};
+      const donated = t.donated || {};
+      const done = E.STUDENTS.filter(n => donated[n]).length;
+      const won = E.gaugeWon(done);
+      $('gauge-won').textContent = E.fmtWon(won) + ' / 1,300만 원';
+      $('mini-won').textContent = E.fmtWon(won);
+      $('mini-fill').style.width = (done / E.STUDENTS.length * 100) + '%';
+      box.querySelectorAll('#cells .cell').forEach(c => c.classList.toggle('on', !!donated[c.dataset.no]));
+      $('celebrate').hidden = done < E.STUDENTS.length;
+
+      const solved = solvedOf(t, me), coins = coinsOf(t, me);
+      $('yeop').innerHTML = [0, 1, 2, 3].map(i => '<span class="' + (i < coins ? 'on' : '') + '"></span>').join('');
+      $('coin-count').textContent = coins + ' / ' + E.COINS_NEEDED;
+      quiz.forEach(x => {
+        const card = box.querySelector('.quiz-card[data-mission="' + x.mission + '"]');
+        const btns = card.querySelectorAll('button[data-opt]');
+        if (solved[x.mission]) {
+          card.classList.add('done');
+          btns.forEach(b => { b.disabled = true; b.classList.toggle('right', Number(b.dataset.opt) === x.answer); });
+          card.querySelector('.quiz-msg').textContent = '맞혔어요! 엽전 1개를 얻었어요.';
+        } else if (!(cooldown[x.mission] > Date.now())) {
+          card.classList.remove('done'); btns.forEach(b => { b.disabled = false; b.classList.remove('right'); });
+        }
+      });
+      const btn = $('donate'), msg = $('donate-msg');
+      if (donated[me]) { btn.disabled = true; btn.textContent = '넣었어요! 고마워요'; msg.textContent = '아직 못 넣은 친구가 있으면 도와줘요.'; }
+      else {
+        btn.textContent = '65만 원 모금함에 넣기'; btn.disabled = coins < E.COINS_NEEDED;
+        msg.textContent = coins < E.COINS_NEEDED ? '엽전 ' + (E.COINS_NEEDED - coins) + '개를 더 모으면 넣을 수 있어요.' : '이제 모금함에 넣어요!';
+      }
+      $('mates').innerHTML = mem.map(n => '<div class="mate' + (donated[n] ? ' on' : '') + (n === me ? ' me' : '') + '">' + n + '번<br>' +
+        (donated[n] ? '넣었어요' : '엽전 ' + coinsOf(t, n) + '/' + E.COINS_NEEDED) + '</div>').join('');
+
+      const gf = (t.groups || {})[group] || {}, f = gf.f || {}, p = gf.p || {};
+      box.querySelectorAll('[data-show]').forEach(el => {
+        const v = f[el.dataset.show];
+        el.innerHTML = v && String(v).trim() ? esc(v) : '<span class="blank">아직 안 썼어요</span>';
+      });
+      mineInputs.forEach(inp => { if (box.ownerDocument.activeElement !== inp && inp.value !== (f[inp.dataset.field] || '')) inp.value = f[inp.dataset.field] || ''; });
+      if (box.ownerDocument.activeElement !== promise && promise.value !== (p[me] || '')) promise.value = p[me] || '';
+      $('cert-out').innerHTML = certHtml(group, f, gf.weeks);
+      $('news-out').innerHTML = newsHtml(group, f, p);
+    }
+
+    function lock(card, x) {
+      cooldown[x.mission] = Date.now() + E.QUIZ_WAIT * 1000;
+      const btns = card.querySelectorAll('button[data-opt]'), msg = card.querySelector('.quiz-msg');
+      const tick = () => {
+        if (!card.isConnected || card.classList.contains('done')) return;
+        const left = Math.ceil((cooldown[x.mission] - Date.now()) / 1000);
+        if (left > 0) { btns.forEach(b => { b.disabled = true; }); msg.textContent = x.friend + '번 친구에게 물어보고 다시 골라요. (' + left + ')'; setTimeout(tick, 250); }
+        else { delete cooldown[x.mission]; btns.forEach(b => { b.disabled = false; }); msg.textContent = x.friend + '번 친구에게 물어봤나요? 다시 골라 봐요.'; }
+      };
+      tick();
+    }
+
+    $('quiz').addEventListener('click', e => {
+      const b = e.target.closest('button[data-opt]');
+      if (!b || b.disabled) return;
+      const card = b.closest('.quiz-card'), x = quiz.find(z => z.mission === Number(card.dataset.mission));
+      if (Number(b.dataset.opt) === x.answer) Y.set('quiz/' + me + '/' + x.mission, true);
+      else lock(card, x);
+    });
+    $('donate').addEventListener('click', () => {
+      const t = Y.tree() || {};
+      if (coinsOf(t, me) >= E.COINS_NEEDED && !(t.donated || {})[me]) Y.set('donated/' + me, true);
+    });
+    mineInputs.forEach(inp => inp.addEventListener('input', () => Y.set(base + '/f/' + inp.dataset.field, inp.value.slice(0, 200) || null)));
+    promise.addEventListener('input', () => Y.set(base + '/p/' + me, promise.value.slice(0, 200) || null));
+    $('cert-out').addEventListener('click', e => {
+      const b = e.target.closest('[data-week]');
+      if (!b) return;
+      const w = (((Y.tree() || {}).groups || {})[group] || {}).weeks || {};
+      Y.set(base + '/weeks/' + b.dataset.week, w[b.dataset.week] ? null : true);
+    });
     $('print').addEventListener('click', () => window.print());
-    showCert(); showNews();
+
+    const offData = Y.subscribe(refresh);
+    const offStatus = Y.onStatus(s => { const n = $('net'); if (n) { n.textContent = STATUS[s] || s; n.className = 'status ' + s; } });
+    unsub = () => { offData(); offStatus(); };
   };
 })();
 </script>

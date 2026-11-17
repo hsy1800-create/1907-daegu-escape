@@ -112,33 +112,80 @@ test('vault opens with the group code and hints after three misses', async () =>
   await fillCode('37160'); eq(W().location.hash, '#group');
 });
 
-// ---------------- Task 3: group activities ----------------
-async function openVault12() { await pick(12); setVal('#answer', '3'); await click('#check'); await click('#to-vault'); await fillCode('37160'); }
-test('group page shows think, certificate and newspaper sections', async () => {
+// ---------------- Task 3 (realtime Task 2): group page on each tablet ----------------
+const SY = () => W().Escape.sync;
+async function openVaultAs(no, keep) {
+  const E = W().Escape; if (keep) await pickKeep(no); else await pick(no);
+  setVal('#answer', E.MISSIONS[E.missionFor(no)].digit); await click('#check'); await click('#to-vault');
+  await fillCode(E.groupCode(E.groupOf(no).group));
+}
+async function openVault12() { await openVaultAs(12); }
+const quizBtn = (m, i) => q('.quiz-card[data-mission="' + m + '"] button[data-opt="' + i + '"]');
+async function answerRight(m) { quizBtn(m, W().Escape.QUIZ[m].answer).click(); await wait(120); }
+test('group page has donation, class gauge, think, certificate and newspaper on each tablet', async () => {
   await openVault12();
-  ok(q('#think') && q('#think').textContent.includes('까닭'), 'think'); ok(q('#cert-form'), 'cert form'); ok(q('#news-form'), 'news form');
-  eq(qa('#news-form input[data-promise]').length, 5);
+  ok(q('#quiz') && q('#class-gauge') && q('#think') && q('#cert') && q('#news'), 'sections');
+  eq(qa('.quiz-card').length, 4); ok(q('.quiz-card[data-mission="4"]').textContent.includes('13번'), 'friend 13 has mission 4');
+  ok(q('#think').textContent.includes('까닭'), 'think question');
 });
-test('certificate shows group, members and the pledge', async () => {
+test('a right quiz answer earns a coin and is saved to the class data', async () => {
+  await openVault12(); await answerRight(4);
+  eq(SY().tree().quiz[12][4], true); ok(q('#coin-count').textContent.includes('1'), q('#coin-count').textContent);
+  ok(q('.quiz-card[data-mission="4"]').classList.contains('done'), 'card marked done');
+});
+test('a wrong quiz answer locks that question and earns nothing', async () => {
   await openVault12();
-  setVal('#cut', '쉬는 시간 스마트폰'); setVal('#save', '군것질 돈'); setVal('#from', '11월 20일'); setVal('#to', '12월 20일');
-  await click('#cert-make');
+  const wrong = [0, 1, 2, 3].find(i => i !== W().Escape.QUIZ[4].answer);
+  quizBtn(4, wrong).click(); await wait(120);
+  ok(qa('.quiz-card[data-mission="4"] button[data-opt]').every(b => b.disabled), 'locked');
+  ok(q('.quiz-card[data-mission="4"] .quiz-msg').textContent.includes('13번'), 'ask friend 13');
+  ok(!(SY().tree().quiz && SY().tree().quiz[12]), 'no coin');
+  ok(!quizBtn(5, 0).disabled, 'other questions still open');
+});
+test('the donate button works only after four coins and puts in 65만 원', async () => {
+  await openVault12();
+  ok(q('#donate').disabled, 'disabled before coins');
+  for (const m of [4, 5, 1, 2]) await answerRight(m);
+  ok(!q('#donate').disabled, 'enabled after 4 coins'); await click('#donate');
+  eq(SY().tree().donated[12], true); ok(q('#gauge-won').textContent.includes('65만 원'), q('#gauge-won').textContent);
+  ok(q('#donate-box').textContent.includes('넣었어요'), 'thanks');
+});
+test('the class gauge rises live when other students donate and celebrates at 20', async () => {
+  await openVault12();
+  SY().set('donated/7', true); await wait(80); ok(q('#gauge-won').textContent.includes('65만 원'), q('#gauge-won').textContent);
+  ok(q('#class-gauge .cell[data-no="7"]').classList.contains('on'), 'cell 7 on');
+  for (const n of W().Escape.STUDENTS) SY().set('donated/' + n, true);
+  await wait(80); ok(q('#gauge-won').textContent.includes('1,300만 원')); ok(!q('#celebrate').hidden, 'celebrate');
+});
+test('each member writes only their own parts and sees friends parts live', async () => {
+  await openVault12();
+  ok(q('#f-cut') && q('#f-fact1'), 'seat 1 parts'); ok(!q('#f-save') && !q('#f-slogan'), 'not other seats parts');
+  setVal('#f-cut', '쉬는 시간 스마트폰'); eq(SY().tree().groups[3].f.cut, '쉬는 시간 스마트폰');
+  SY().set('groups/3/f/save', '군것질 돈'); SY().set('groups/3/f/from', '11월 20일'); await wait(80);
   const t = q('#cert').textContent;
-  ok(t.includes('3모둠') && t.includes('12') && t.includes('18') && t.includes('쉬는 시간 스마트폰') && t.includes('군것질 돈') && t.includes('11월 20일'), t);
+  ok(t.includes('3모둠') && t.includes('12번') && t.includes('18번') && t.includes('쉬는 시간 스마트폰') && t.includes('군것질 돈') && t.includes('11월 20일'), t);
+  ok(q('[data-show="save"]').textContent.includes('군것질 돈'), 'friend part shown');
 });
-test('newspaper shows headline, facts, donors and slogan, and survives reload', async () => {
+test('typing is not interrupted when a friend writes', async () => {
   await openVault12();
-  setVal('#news-place', '대구'); setVal('#fact1', '광문사에서 제안'); setVal('#fact2', '부인 일곱 명'); setVal('#fact3', '석 달 단연'); setVal('#slogan', '함께 갚아요');
-  setVal('#news-form input[data-promise="13"]', '책 읽기');
-  await click('#news-make');
+  const inp = q('#f-cut'); inp.focus(); setVal('#f-cut', '쉬는');
+  SY().set('groups/3/f/save', '돈'); await wait(80);
+  eq(q('#f-cut').value, '쉬는'); eq(D().activeElement && D().activeElement.id, 'f-cut');
+});
+test('my promise goes into the newspaper and stays after reload', async () => {
+  await openVault12();
+  setVal('#my-promise', '책 읽기'); eq(SY().tree().groups[3].p[12], '책 읽기');
+  SY().set('groups/3/f/place', '대구'); SY().set('groups/3/f/slogan', '함께 갚아요'); await wait(80);
   let t = q('#news').textContent;
-  ok(t.includes('3모둠') && t.includes('대구에서 시작된 국채보상운동') && t.includes('부인 일곱 명') && t.includes('13번') && t.includes('책 읽기') && t.includes('함께 갚아요'), t);
-  await reloadApp(); eq(W().location.hash, '#group'); t = q('#news').textContent; ok(t.includes('함께 갚아요'), 'kept after reload');
+  ok(t.includes('대구에서 시작된 국채보상운동') && t.includes('12번') && t.includes('책 읽기') && t.includes('함께 갚아요'), t);
+  await reloadApp(); eq(W().location.hash, '#group');
+  ok(q('#news').textContent.includes('책 읽기'), 'kept'); eq(q('#my-promise').value, '책 읽기');
 });
-test('typed text is shown as text, not as HTML', async () => {
+test('friends text is shown as text, not as HTML', async () => {
   await openVault12();
-  setVal('#slogan', '<b>굵게</b>'); await click('#news-make');
-  ok(!q('#news .slogan b'), 'no b element in slogan'); ok(q('#news .slogan').textContent.includes('<b>굵게</b>'));
+  SY().set('groups/3/f/slogan', '<b>굵게</b>'); SY().set('groups/3/p/13', '<img src=x>'); await wait(80);
+  ok(!q('#news .slogan b'), 'no b in slogan'); ok(q('#news .slogan').textContent.includes('<b>굵게</b>'));
+  ok(!q('#news img') && !q('[data-show="slogan"] b'), 'no elements from friends text');
 });
 
 // ---------------- Task 4: videos and library ----------------
@@ -188,15 +235,13 @@ test('reset sends the device back to the start screen, locked', async () => {
   await teacher(); W().confirm = () => true; await click('#reset');
   eq(W().location.hash, '#start'); await go('#teacher'); ok(!q('.code-row'), 'locked after reset');
 });
-test('another group on the same device starts with an empty certificate and newspaper', async () => {
-  await pick(1); setVal('#answer', '6'); await click('#check'); await click('#to-vault'); await fillCode('60371');
-  setVal('#cut', '1모둠 약속'); await click('#cert-make'); setVal('#slogan', '1모둠 문구'); await click('#news-make');
-  ok(q('#cert') && q('#news'), 'group 1 made both');
-  await pickKeep(13); setVal('#answer', '7'); await click('#check'); await click('#to-vault'); await fillCode('37160');
-  eq(W().location.hash, '#group');
-  ok(!q('#cert') && !q('#news'), 'nothing made yet for group 3'); eq(q('#cut').value, ''); eq(q('#slogan').value, '');
-  await pickKeep(1); setVal('#answer', '6'); await click('#check'); await click('#to-vault'); await fillCode('60371');
-  ok(q('#cert') && q('#cert').textContent.includes('1모둠 약속'), 'group 1 work is still there');
+test('another group on the same device does not see the first group work', async () => {
+  await openVaultAs(1); setVal('#f-cut', '1모둠 약속');
+  ok(q('#cert').textContent.includes('1모둠 약속'), 'group 1 cert');
+  await openVaultAs(13, true); eq(W().location.hash, '#group');
+  ok(!q('#cert').textContent.includes('1모둠 약속'), 'group 3 cert is its own');
+  await openVaultAs(1, true);
+  ok(q('#cert').textContent.includes('1모둠 약속'), 'group 1 work is still there'); eq(q('#f-cut').value, '1모둠 약속');
 });
 test('Korean number words are accepted for missions 3 and 4', () => {
   const a = W().Escape.checkAnswer;
@@ -229,8 +274,8 @@ test('history wording: one start date, plain 단연, documented 광문사 roles,
   ok(M[5].clue.includes('북후정') && M[5].clue.includes('2월 21일'), 'mission 5 keeps its answer');
   ok(M[3].extra.indexOf('담배를 끊는 것을 ‘단연’이라고 해요') === 0, M[3].extra);
   ok(M[1].extra.includes('사장') && M[1].extra.includes('부사장'), M[1].extra);
-  await openVault12(); setVal('#cut', 'x'); await click('#cert-make');
-  ok(!q('#cert').textContent.includes('의연한 모둠'), 'certificate label');
+  await openVault12();
+  ok(q('#cert') && !q('#cert').textContent.includes('의연한 모둠'), 'certificate label');
 });
 
 // ---------------- runner ----------------
