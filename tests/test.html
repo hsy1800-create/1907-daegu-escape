@@ -87,11 +87,13 @@ test('firebase backend maps subscribe, set and clear onto the class room', () =>
   });
   const fb = { apps: [], initializeApp(cfg) { calls.push(['init', cfg.databaseURL]); return { database: () => ({ ref }) }; } };
   const b = W().Escape.makeFirebaseBackend(fb, 'https://x.firebasedatabase.app', 'class');
-  let got = null; b.subscribe(t => { got = t; }); eq(got, null, 'nothing before the data arrives');
-  valueCb({ val: () => ({ donated: { 3: true } }) }); eq(got, { donated: { 3: true } }); eq(b.tree().donated[3], true);
+  let got = null; b.subscribe(t => { got = t; }); eq(got, {}, 'drawn at once, before the server answers'); eq(b.loaded(), false, 'not loaded yet');
+  b.set('quiz/12/4', true); eq(got.quiz[12][4], true, 'a change shows right away even while offline');
+  valueCb({ val: () => ({ donated: { 3: true } }) }); eq(got, { donated: { 3: true } }); eq(b.tree().donated[3], true); eq(b.loaded(), true);
   b.set('donated/7', true); b.set('groups/1/f/cut', null); b.clear(9);
-  eq(calls, [['init', 'https://x.firebasedatabase.app'], ['set', 'rooms/class/donated/7', true], ['set', 'rooms/class/groups/1/f/cut', null], ['set', 'rooms/class', { session: 9 }]]);
+  eq(calls, [['init', 'https://x.firebasedatabase.app'], ['set', 'rooms/class/quiz/12/4', true], ['set', 'rooms/class/donated/7', true], ['set', 'rooms/class/groups/1/f/cut', null], ['set', 'rooms/class', { session: 9 }]]);
   eq(b.status(), 'connecting'); connCb({ val: () => true }); eq(b.status(), 'online');
+  eq(W().Escape.sync.loaded(), true, 'local mode is always loaded');
 });
 
 // ---------------- Task 2: student flow ----------------
@@ -197,6 +199,19 @@ test('my promise goes into the newspaper and stays after reload', async () => {
   await reloadApp(); eq(W().location.hash, '#group');
   ok(q('#news').textContent.includes('책 읽기'), 'kept'); eq(q('#my-promise').value, '책 읽기');
 });
+test('a wrong-answer lock survives leaving the page and reloading', async () => {
+  await openVault12();
+  const wrong = [0, 1, 2, 3].find(i => i !== W().Escape.QUIZ[4].answer);
+  quizBtn(4, wrong).click(); await wait(120);
+  const locked = () => qa('.quiz-card[data-mission="4"] button[data-opt]').every(b => b.disabled);
+  await go('#library'); await go('#group'); ok(locked(), 'still locked after going away and back');
+  await reloadApp(); ok(locked(), 'still locked after reload');
+});
+test('the group page does not give away friend quiz answers outside the quiz', async () => {
+  await openVault12();
+  const E = W().Escape, txt = qa('#group-body .card').filter(c => c.id !== 'quiz').map(c => c.textContent).join(' ');
+  for (const m of [1, 2, 3, 4, 5]) { const a = E.QUIZ[m].options[E.QUIZ[m].answer]; ok(!txt.includes(a), 'mission ' + m + ' answer shown: ' + a); }
+});
 test('friends text is shown as text, not as HTML', async () => {
   await openVault12();
   SY().set('groups/3/f/slogan', '<b>굵게</b>'); SY().set('groups/3/p/13', '<img src=x>'); await wait(80);
@@ -252,6 +267,13 @@ test('teacher board shows donations live without any teacher clicks', async () =
   ok(q('#groups-board').textContent.includes('3번'), 'group progress listed');
   for (const n of W().Escape.STUDENTS) SY().set('donated/' + n, true);
   await wait(80); ok(q('#gauge-won').textContent.includes('1,300만 원')); ok(!q('#celebrate').hidden, 'celebrate');
+});
+test('the teacher board keeps vault codes and answers hidden until the teacher opens them', async () => {
+  await teacher();
+  ok(q('#answers') && q('#answers').hidden, 'hidden at first, safe for the TV');
+  await click('#show-answers'); ok(!q('#answers').hidden, 'shown after pressing');
+  await go('#start'); await go('#teacher'); setVal('#pin', '4129'); await click('#pin-ok');
+  ok(q('#answers').hidden, 'hidden again after leaving');
 });
 test('새 수업 시작 clears the class data and this device', async () => {
   await pick(12); await teacher(); SY().set('donated/1', true);
